@@ -60,24 +60,35 @@ head(malawi_facilities_MFL)
    - 9 types of facilities, including unclassified. Number of each type is shown. Top 3 are clinics (585), health centers (520) and Dispensaries (179). All are primary level. What is private? 
   
 ```{r}
+# Re-order the facility types
+malawi_MFL$TYPE = as.factor(malawi_MFL$TYPE)
+
+malawi_MFL$TYPE = factor(malawi_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified"))
+
 # Number of each type
 facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE))
 facility_types_MFL
 
 ## bar plot of no. of facility types 
-plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill = "springgreen4")
+plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency") + coord_flip()
 plot_facility_types_MFL
 ```
   
    - 8 types of ownership, top 3 are government (695), Private (495) and CHAM. It seems that private not for profit is separated from private for profit in this data set. 
 
 ```{r}
+# Re-order ownership
+malawi_MFL$OWNERSHIP = as.factor(malawi_MFL$OWNERSHIP)
+
+malawi_MFL$OWNERSHIP = factor(malawi_MFL$OWNERSHIP, levels = c("Government", "Private", "Christian Health Association of Malawi (CHAM)", "Non-Government", "Mission/Faith-based (other than CHAM)", "Other", "Parastatal", "Aquaid Lifeline"))
 # Number of each type of ownership
 ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
 ownership_MFL
 
 ## bar plot of ownership
-plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill = "springgreen4")
+plot_ownership_MFL = plot_ownership_MFL + labs(x = "Ownership", y = "Frequency") + coord_flip()
 plot_ownership_MFL
 ```
   
