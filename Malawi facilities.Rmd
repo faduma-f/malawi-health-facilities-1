@@ -1,0 +1,275 @@
+---
+title: "Malawi"
+author: '35762384'
+date: "20/01/2021"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+```{r}
+library(sf)
+library(readxl)
+library(dplyr)
+library(plyr)
+library(ggplot2)
+library(afrihealthsites)
+library(ggpubr)
+library(afriadmin)
+library(tmap)
+
+# Install Malawi MFL
+malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
+head(malawi_MFL)
+
+# Convert to sf
+
+## omit NA's
+new_malawi_MFL = na.omit(malawi_MFL)
+
+## check for NA 
+any(is.na(new_malawi_MFL))
+
+## transform geometry columns into numeric 
+sapply(new_malawi_MFL, class)
+new_malawi_MFL = transform(new_malawi_MFL, LATITUDE = as.numeric(LATITUDE), 
+                                           LONGITUDE = as.numeric(LONGITUDE))
+
+any(is.na(new_malawi_MFL)) ## check for NA
+
+new_malawi_MFL = na.omit(new_malawi_MFL) ## and omit
+
+## convert to sf object
+malawi_facilities_MFL = st_as_sf(new_malawi_MFL, coords = c("LONGITUDE", "LATITUDE"), dim = "XY")
+
+malawi_facilities_MFL = st_set_crs(malawi_facilities_MFL, 4326) ## set CRS, is WGS84 right?
+
+malawi_facilities_MFL
+```
+
+Overview:
+1. Malawi MFL
+   - Facility locations managed by the Ministry of Health and Population Malawi. WHO guidance states that it should be updated at least every 2 years. Last update is unknown. 
+   - Locations in lat-long, CRS set to WGS84
+   - 1546 facilities reported, data includes name, ownership, type of facility and functional status.
+
+```{r setup, include=FALSE}
+head(malawi_facilities_MFL)
+```
+
+   - 9 types of facilities, including unclassified. Number of each type is shown. Top 3 are clinics (585), health centers (520) and Dispensaries (179). All are primary level. What is private? 
+  
+```{r}
+# Number of each type
+facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE))
+facility_types_MFL
+
+## bar plot of no. of facility types 
+plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_facility_types_MFL
+```
+  
+   - 8 types of ownership, top 3 are government (695), Private (495) and CHAM. It seems that private not for profit is separated from private for profit in this data set. 
+
+```{r}
+# Number of each type of ownership
+ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
+ownership_MFL
+
+## bar plot of ownership
+plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_ownership_MFL
+```
+  
+
+  
+```{r}
+
+```
+
+2. WHO-KWTRP
+   - Focuses on facilities run by government, faith-based organisations, NGO's and local authorities. Covers 50 countries in sub-Saharan Africa. Sources of information include health sector reports, websites run by national or international organisations and personal communications
+   - If MFL was available it was used. More than one datasource was often used to compile facility list
+   - Private facilities are excluded, duplicates removed, name errors corrected and name variations were matched. Missing info was added with the use of other datasources. 
+   - Now hosted by the WHO Global Malaria Programme, last update February 2019
+   
+   - Malawi datasources includes MFL, https://data.humdata.org/dataset/malawi-health and http://www.cham.org.mw/uploads/7/3/0/8/73088105/cham_health_facilities_-_1_june_2016.pdf
+   - At time of publishing, 639 facilities with 9 missing coordinates, not been updated since
+   - Data includes facility name, type, ownership, source of location and reclassified facility types
+
+```{r}
+
+# Malawi WHO data.frame
+malawi_WHO <- afrihealthsites("malawi", datasource='who', plot=FALSE, returnclass='dataframe')
+
+head(malawi_WHO)
+
+```
+
+   - Original facility types: 8 types, top 3 are health centers (457), health post/dispensary (87) and mission hospitals (27). Large difference between types. 
+   
+```{r}
+# No. of original facility types 
+facility_types_WHO = as.data.frame(table(malawi_WHO$`Facility type`))
+facility_types_WHO
+
+## bar plot of original facility types 
+plot_facility_types_WHO = ggplot(facility_types_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_facility_types_WHO
+
+```
+   
+   - Reclassified facility types: Hospitals are aggregated except Community Hospital (became Community Health Unit), the rest are the same. 
+   
+```{r}
+# No. of reclassified facility types
+RC_facility_types_WHO = as.data.frame(table(malawi_WHO$facility_type_9))
+RC_facility_types_WHO
+
+## bar plot of reclassified facility types 
+plot_RC_facility_types_WHO = ggplot(RC_facility_types_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_RC_facility_types_WHO
+```
+   
+   - Ownership: 4 types, majority is government owned (467) with faith based organisations next. 
+   
+```{r}
+# Types of ownership
+ownership_WHO = as.data.frame(table(malawi_WHO$Ownership))
+ownership_WHO
+
+## bar plot of ownership
+plot_ownership_WHO = ggplot(ownership_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_ownership_WHO
+```
+
+  
+
+```{r}
+
+```
+
+
+Both data sources contain no information on services available, capacity or equipment. MFL does state whether facility is functional.
+
+Classification of MFL facilities aligns more with the structure of the health care system in Malawi (community, primary, secondary, tertiary), it differentiates central hospitals from district and other hospitals. WHO has additional rural and mission hospitals, where do they fit in?
+
+https://www.health.gov.mw/index.php/2016-01-06-19-58-23/national-aids states that at community level, health posts, dispensaries and maternity clinics offer services. Primary includes health centers and community hospitals, secondary consists of district and some CHAM hospitals, tertiary includes central hospitals. 
+
+
+Analysis:
+
+- 1546 compared to 648 facilities, difference of 898
+```{r}
+
+# facility types
+plot_facilities = ggarrange(plot_facility_types_MFL, plot_RC_facility_types_WHO, 
+                           ncol = 2,
+                           labels = c("A", "B"))
+plot_facilities
+
+# ownership
+plot_ownership = ggarrange(plot_ownership_MFL, plot_ownership_WHO, 
+                           ncol = 2, 
+                           labels = c("A", "B"))
+plot_ownership
+```
+- Maps
+  
+```{r}
+
+# choose admin level
+malawi_admin <- afriadmin("malawi",level=2, plot='sf')
+
+# static WHO facility location map
+map_static_WHO = afrihealthsites("malawi", datasource='who', plot='sf')
+
+# combined plot of MFL and WHO facilities, static 
+plot(st_geometry(malawi_admin))
+plot(st_geometry(map_static_WHO), add = TRUE)
+plot(st_geometry(malawi_facilities_MFL), add = TRUE)
+
+# tmap
+
+tmap_mode("view")
+
+## admin map
+tmap_admin = tm_shape(st_geometry(malawi_admin)) + tm_borders()
+
+## MFL facility locations
+tmap_facilities_MFL = tmap_admin + tm_shape(malawi_facilities_MFL) + tm_dots(col = "TYPE", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "MFL", title.position = c("left", "top"))
+tmap_facilities_MFL
+
+## WHO facility locations
+tmap_facilities_WHO = tmap_admin + tm_shape(map_static_WHO) + tm_dots(col = "facility_type_9", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
+tmap_facilities_WHO
+
+## combined 
+tmap_facilities_MFL_WHO = tmap_facilities_WHO + tm_shape(malawi_facilities_MFL) + tm_bubbles(col = "TYPE", palette = "YlOrRd", size = 0.05, alpha = 0.7) + tm_layout(frame = FALSE, asp = 2, title = "MFL & WHO", title.position = c("left", "top"))
+tmap_facilities_MFL_WHO
+
+## final 
+tmap_arrange(tmap_facilities_MFL, tmap_facilities_WHO, ncol = 2) # side by side
+
+tmap_facilities_MFL_WHO = tmap_facilities_WHO + tm_shape(malawi_facilities_MFL) + tm_dots(col = "TYPE", palette = "YlOrRd", alpha = 0.7) + tm_layout(frame = FALSE, asp = 2, title = "MFL & WHO", title.position = c("left", "top")) 
+tmap_facilities_MFL_WHO # combined
+
+```
+
+
+  Qs to address?:
+  
+  1. How many facilities are in the same location across the MFL and WHO datasets?
+  2. Do same facilities share same names/other attributes?
+  3. The ones that aren't, are they within 50m of another facility? 
+
+```{r}
+# Qs 1 - how many intersect?
+
+## convert malawi_WHO to sf object
+
+class(malawi_WHO)
+any(is.na(malawi_WHO))
+
+new_malawi_WHO = na.omit(malawi_WHO) ## omit NA
+
+sf_malawi_WHO = st_as_sf(new_malawi_WHO, coords = c("Long", "Lat"), dim = "XY")
+sf_malawi_WHO = st_set_crs(sf_malawi_WHO, 4326)
+
+## st_intersection
+intersect_WHO_MFL = st_intersection(x=sf_malawi_WHO, y=malawi_facilities_MFL)
+intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal places?
+
+
+# Qs 2 - Do they share same attributes
+## ownership is same, 1 name is same, Euthini registered as a hospital in MFL but as a health centre in WHO
+
+# Qs 3 - how many/which are within 50m of another facility? 
+```
+
+
+
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
