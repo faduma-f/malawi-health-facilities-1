@@ -65,14 +65,16 @@ malawi_MFL$TYPE = as.factor(malawi_MFL$TYPE)
 
 malawi_MFL$TYPE = factor(malawi_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified"))
 
-# Number of each type
-facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE))
+# Number of each type + ownership
+facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE, malawi_MFL$OWNERSHIP))
 facility_types_MFL
 
 ## bar plot of no. of facility types 
-plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill = "springgreen4")
-plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency") + coord_flip()
+plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
+plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9))
 plot_facility_types_MFL
+
+par(mar=c(11,4,4,4))
 ```
   
    - 8 types of ownership, top 3 are government (695), Private (495) and CHAM. It seems that private not for profit is separated from private for profit in this data set. 
@@ -87,8 +89,8 @@ ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
 ownership_MFL
 
 ## bar plot of ownership
-plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill = "springgreen4")
-plot_ownership_MFL = plot_ownership_MFL + labs(x = "Ownership", y = "Frequency") + coord_flip()
+plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq, fill=Var1)) + geom_bar(stat = "identity")
+plot_ownership_MFL = plot_ownership_MFL + scale_fill_brewer(palette="Dark2") + labs(x = "Ownership", y = "Frequency") + coord_flip()
 plot_ownership_MFL
 ```
   
