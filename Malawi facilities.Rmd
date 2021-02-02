@@ -17,6 +17,7 @@ library(afrihealthsites)
 library(ggpubr)
 library(afriadmin)
 library(tmap)
+library(cowplot)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -189,21 +190,22 @@ Analysis:
 
 - 1546 compared to 648 facilities, difference of 898
 ```{r}
-
 # facility types
-plot_facilities = ggarrange(plot_facility_types_MFL, plot_RC_facility_types_WHO, 
-                           ncol = 2,
-                           labels = c("A", "B"))
-plot_facilities
+plot_facilities = align_plots(plot_facility_types_MFL, plot_facility_types_WHO, align = "v")
+ggdraw(plot_facilities[[1]])
+ggdraw(plot_facilities[[2]])
 
-# ownership
-plot_ownership = ggarrange(plot_ownership_MFL, plot_ownership_WHO, 
-                           ncol = 2, 
-                           labels = c("A", "B"))
-plot_ownership
 ```
+
+- Ownership
+```{r}
+# ownership
+plot_ownership = align_plots(plot_ownership_MFL, plot_ownership_WHO, align = "v")
+ggdraw(plot_ownership[[1]])
+ggdraw(plot_ownership[[2]])
+```
+
 - Maps
-  
 ```{r}
 
 # choose admin level
@@ -232,9 +234,6 @@ tmap_facilities_MFL
 tmap_facilities_WHO = tmap_admin + tm_shape(map_static_WHO) + tm_dots(col = "facility_type_9", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
 tmap_facilities_WHO
 
-## combined 
-tmap_facilities_MFL_WHO = tmap_facilities_WHO + tm_shape(malawi_facilities_MFL) + tm_bubbles(col = "TYPE", palette = "YlOrRd", size = 0.05, alpha = 0.7) + tm_layout(frame = FALSE, asp = 2, title = "MFL & WHO", title.position = c("left", "top"))
-tmap_facilities_MFL_WHO
 
 ## final 
 tmap_arrange(tmap_facilities_MFL, tmap_facilities_WHO, ncol = 2) # side by side
