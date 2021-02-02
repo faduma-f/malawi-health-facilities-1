@@ -5,9 +5,10 @@ date: "20/01/2021"
 output: 
   html_document: 
     keep_md: yes
+    code_folding: show
 ---
 
-```{r}
+```{r, message=FALSE}
 library(sf)
 library(readxl)
 library(dplyr)
@@ -21,7 +22,6 @@ library(cowplot)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
-head(malawi_MFL)
 
 # Convert to sf
 
@@ -45,22 +45,20 @@ malawi_facilities_MFL = st_as_sf(new_malawi_MFL, coords = c("LONGITUDE", "LATITU
 
 malawi_facilities_MFL = st_set_crs(malawi_facilities_MFL, 4326) ## set CRS, is WGS84 right?
 
-malawi_facilities_MFL
-```
-
-Overview:
-1. Malawi MFL
-   - Facility locations managed by the Ministry of Health and Population Malawi. WHO guidance states that it should be updated at least every 2 years. Last update is unknown. 
-   - Locations in lat-long, CRS set to WGS84
-   - 1546 facilities reported, data includes name, ownership, type of facility and functional status.
-
-```{r setup, include=FALSE}
 head(malawi_facilities_MFL)
 ```
 
-   - 9 types of facilities, including unclassified. Number of each type is shown. Top 3 are clinics (585), health centers (520) and Dispensaries (179). All are primary level. What is private? 
+
+
+Overview:
+
+1. Malawi MFL
+- Facility locations managed by the Ministry of Health and Population Malawi. WHO guidance states that it should be updated at least every 2 years. Last update is unknown. 
+- Locations in lat-long, CRS set to WGS84
+- 1546 facilities reported, data includes name, ownership, type of facility and functional status.
+- 9 types of facilities, including unclassified. Number of each type is shown. Top 3 are clinics (585), health centers (520) and Dispensaries (179). All are primary level. What is private? 
   
-```{r}
+```{r, class.source = 'fold-hide'}
 # Re-order the facility types
 malawi_MFL$TYPE = as.factor(malawi_MFL$TYPE)
 
@@ -68,19 +66,20 @@ malawi_MFL$TYPE = factor(malawi_MFL$TYPE, levels = c("Central Hospital", "Distri
 
 # Number of each type + ownership
 facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE, malawi_MFL$OWNERSHIP))
-facility_types_MFL
+head(facility_types_MFL)
 
 ## bar plot of no. of facility types 
 plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
-plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9))
+plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
 plot_facility_types_MFL
 
 par(mar=c(11,4,4,4))
 ```
   
-   - 8 types of ownership, top 3 are government (695), Private (495) and CHAM. It seems that private not for profit is separated from private for profit in this data set. 
+  
+- 8 types of ownership, top 3 are government (695), Private (495) and CHAM. It seems that private not for profit is separated from private for profit in this data set. 
 
-```{r}
+```{r, class.source = 'fold-hide'}
 # Re-order ownership
 malawi_MFL$OWNERSHIP = as.factor(malawi_MFL$OWNERSHIP)
 
@@ -95,24 +94,20 @@ plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat 
 plot_ownership_MFL = plot_ownership_MFL + labs(y = "Frequency") + coord_flip() + theme_pubclean() + theme(axis.title.y = element_blank()) + ggtitle("Ownership")
 plot_ownership_MFL
 ```
-  
 
-  
-```{r}
 
-```
 
 2. WHO-KWTRP
-   - Focuses on facilities run by government, faith-based organisations, NGO's and local authorities. Covers 50 countries in sub-Saharan Africa. Sources of information include health sector reports, websites run by national or international organisations and personal communications
-   - If MFL was available it was used. More than one datasource was often used to compile facility list
-   - Private facilities are excluded, duplicates removed, name errors corrected and name variations were matched. Missing info was added with the use of other datasources. 
-   - Now hosted by the WHO Global Malaria Programme, last update February 2019
+- Focuses on facilities run by government, faith-based organisations, NGO's and local authorities. Covers 50 countries in sub-Saharan Africa. Sources of information include health sector reports, websites run by national or international organisations and personal communications
+- If MFL was available it was used. More than one datasource was often used to compile facility list
+- Private facilities are excluded, duplicates removed, name errors corrected and name variations were matched. Missing info was added with the use of other datasources. 
+- Now hosted by the WHO Global Malaria Programme, last update February 2019
    
-   - Malawi datasources includes MFL, https://data.humdata.org/dataset/malawi-health and http://www.cham.org.mw/uploads/7/3/0/8/73088105/cham_health_facilities_-_1_june_2016.pdf
-   - At time of publishing, 639 facilities with 9 missing coordinates, not been updated since
-   - Data includes facility name, type, ownership, source of location and reclassified facility types
+- Malawi datasources includes MFL, https://data.humdata.org/dataset/malawi-health and http://www.cham.org.mw/uploads/7/3/0/8/73088105/cham_health_facilities_-_1_june_2016.pdf
+- At time of publishing, 639 facilities with 9 missing coordinates, not been updated since
+- Data includes facility name, type, ownership, source of location and reclassified facility types
 
-```{r}
+```{r, class.source = 'fold-hide'}
 
 # Malawi WHO data.frame
 malawi_WHO <- afrihealthsites("malawi", datasource='who', plot=FALSE, returnclass='dataframe')
@@ -121,9 +116,10 @@ head(malawi_WHO)
 
 ```
 
-   - Original facility types: 8 types, top 3 are health centers (457), health post/dispensary (87) and mission hospitals (27). Large difference between types. 
+
+- Original facility types: 8 types, top 3 are health centers (457), health post/dispensary (87) and mission hospitals (27). Large difference between types. 
    
-```{r}
+```{r, class.source = 'fold-hide'}
 # Re order facility types and ownership 
 malawi_WHO$`Facility type` = as.factor(malawi_WHO$`Facility type`)
 malawi_WHO$`Facility type` = factor(malawi_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital", "Mission Hospital", "Rural Hospital", "Community Hospital", "Health Centre", "Clinic", "Health Post/Dispensary"))
@@ -133,18 +129,19 @@ malawi_WHO$Ownership = factor(malawi_WHO$Ownership, levels = c("MoH", "FBO", "Lo
 
 # No. of original facility types + ownership
 facility_types_WHO = as.data.frame(table(malawi_WHO$`Facility type`, malawi_WHO$Ownership))
-facility_types_WHO
+head(facility_types_WHO)
 
 ## bar plot of original facility types 
 plot_facility_types_WHO = ggplot(facility_types_WHO, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
-plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9))
+plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
 plot_facility_types_WHO
 
 ```
+ 
    
-   - Reclassified facility types: Hospitals are aggregated except Community Hospital (became Community Health Unit), the rest are the same. 
+- Reclassified facility types: Hospitals are aggregated except Community Hospital (became Community Health Unit), the rest are the same. 
    
-```{r}
+```{r, class.source = 'fold-hide'}
 # Re order
 malawi_WHO$facility_type_9 = as.factor(malawi_WHO$facility_type_9)
 malawi_WHO$facility_type_9 = factor(malawi_WHO$facility_type_9, levels = c("Hospital", "Health Centre", "Health Clinic", "Health Post", "Community Health Unit"))
@@ -159,9 +156,10 @@ plot_RC_facility_types_WHO = plot_RC_facility_types_WHO + labs(y = "Frequency") 
 plot_RC_facility_types_WHO
 ```
    
-   - Ownership: 4 types, majority is government owned (467) with faith based organisations second. 
    
-```{r}
+- Ownership: 4 types, majority is government owned (467) with faith based organisations second. 
+   
+```{r, class.source = 'fold-hide'}
 # Types of ownership
 ownership_WHO = as.data.frame(table(malawi_WHO$Ownership))
 ownership_WHO
@@ -172,11 +170,6 @@ plot_ownership_WHO = plot_ownership_WHO + labs(y = "Frequency") + coord_flip() +
 plot_ownership_WHO
 ```
 
-  
-
-```{r}
-
-```
 
 
 Both data sources contain no information on services available, capacity or equipment. MFL does state whether facility is functional.
@@ -186,10 +179,12 @@ Classification of MFL facilities aligns more with the structure of the health ca
 https://www.health.gov.mw/index.php/2016-01-06-19-58-23/national-aids states that at community level, health posts, dispensaries and maternity clinics offer services. Primary includes health centers and community hospitals, secondary consists of district and some CHAM hospitals, tertiary includes central hospitals. 
 
 
+
 Analysis:
 
 - 1546 compared to 648 facilities, difference of 898
-```{r}
+
+```{r, echo=FALSE}
 # facility types
 plot_facilities = align_plots(plot_facility_types_MFL, plot_facility_types_WHO, align = "v")
 ggdraw(plot_facilities[[1]])
@@ -197,16 +192,20 @@ ggdraw(plot_facilities[[2]])
 
 ```
 
+
 - Ownership
-```{r}
+
+```{r, echo=FALSE}
 # ownership
 plot_ownership = align_plots(plot_ownership_MFL, plot_ownership_WHO, align = "v")
 ggdraw(plot_ownership[[1]])
 ggdraw(plot_ownership[[2]])
 ```
 
+
 - Maps
-```{r}
+
+```{r, echo=FALSE, fig.show='hide'}
 
 # choose admin level
 malawi_admin <- afriadmin("malawi",level=2, plot='sf')
@@ -214,11 +213,9 @@ malawi_admin <- afriadmin("malawi",level=2, plot='sf')
 # static WHO facility location map
 map_static_WHO = afrihealthsites("malawi", datasource='who', plot='sf')
 
-# combined plot of MFL and WHO facilities, static 
-plot(st_geometry(malawi_admin))
-plot(st_geometry(map_static_WHO), add = TRUE)
-plot(st_geometry(malawi_facilities_MFL), add = TRUE)
+```
 
+```{r, echo=FALSE}
 # tmap
 
 tmap_mode("view")
@@ -244,19 +241,18 @@ tmap_facilities_MFL_WHO # combined
 ### changing character class to factor for the categorical variable column 
 
 ### MFL
-class(malawi_facilities_MFL$TYPE)
 
 malawi_facilities_MFL$TYPE = as.factor(malawi_facilities_MFL$TYPE)
 
-malawi_facilities_MFL$TYPE = factor(malawi_facilities_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified")) # re-ordering the levels 
+# re-ordering the levels 
+malawi_facilities_MFL$TYPE = factor(malawi_facilities_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified")) 
 
 ### WHO
-class(map_static_WHO$facility_type_9)
 
 map_static_WHO$facility_type_9 = as.factor(map_static_WHO$facility_type_9)
 
-map_static_WHO$facility_type_9 = factor(map_static_WHO$facility_type_9, levels = c("Hospital", "Community Health Unit", "Health Centre", "Health Clinic", "Health Post")) # re-ordering the levels
-
+# re-ordering the levels
+map_static_WHO$facility_type_9 = factor(map_static_WHO$facility_type_9, levels = c("Hospital", "Community Health Unit", "Health Centre", "Health Clinic", "Health Post"))
 ```
 
 
