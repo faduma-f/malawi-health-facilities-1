@@ -84,6 +84,7 @@ par(mar=c(11,4,4,4))
 malawi_MFL$OWNERSHIP = as.factor(malawi_MFL$OWNERSHIP)
 
 malawi_MFL$OWNERSHIP = factor(malawi_MFL$OWNERSHIP, levels = c("Government", "Private", "Christian Health Association of Malawi (CHAM)", "Non-Government", "Mission/Faith-based (other than CHAM)", "Other", "Parastatal", "Aquaid Lifeline"))
+
 # Number of each type of ownership
 ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
 ownership_MFL
@@ -122,6 +123,13 @@ head(malawi_WHO)
    - Original facility types: 8 types, top 3 are health centers (457), health post/dispensary (87) and mission hospitals (27). Large difference between types. 
    
 ```{r}
+# Re order facility types and ownership 
+malawi_WHO$`Facility type` = as.factor(malawi_WHO$`Facility type`)
+malawi_WHO$`Facility type` = factor(malawi_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital", "Mission Hospital", "Rural Hospital", "Community Hospital", "Health Centre", "Clinic", "Health Post/Dispensary"))
+
+malawi_WHO$Ownership = as.factor(malawi_WHO$Ownership)
+malawi_WHO$Ownership = factor(malawi_WHO$Ownership, levels = c("MoH", "FBO", "Local authority", "NGO"))
+
 # No. of original facility types + ownership
 facility_types_WHO = as.data.frame(table(malawi_WHO$`Facility type`, malawi_WHO$Ownership))
 facility_types_WHO
@@ -136,16 +144,21 @@ plot_facility_types_WHO
    - Reclassified facility types: Hospitals are aggregated except Community Hospital (became Community Health Unit), the rest are the same. 
    
 ```{r}
+# Re order
+malawi_WHO$facility_type_9 = as.factor(malawi_WHO$facility_type_9)
+malawi_WHO$facility_type_9 = factor(malawi_WHO$facility_type_9, levels = c("Hospital", "Health Centre", "Health Clinic", "Health Post", "Community Health Unit"))
+
 # No. of reclassified facility types
 RC_facility_types_WHO = as.data.frame(table(malawi_WHO$facility_type_9))
 RC_facility_types_WHO
 
 ## bar plot of reclassified facility types 
-plot_RC_facility_types_WHO = ggplot(RC_facility_types_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_RC_facility_types_WHO = ggplot(RC_facility_types_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
+plot_RC_facility_types_WHO = plot_RC_facility_types_WHO + labs(y = "Frequency") + coord_flip() + theme_pubclean() + theme(axis.title.y = element_blank()) + ggtitle("Reclassified facility types")
 plot_RC_facility_types_WHO
 ```
    
-   - Ownership: 4 types, majority is government owned (467) with faith based organisations next. 
+   - Ownership: 4 types, majority is government owned (467) with faith based organisations second. 
    
 ```{r}
 # Types of ownership
@@ -153,7 +166,8 @@ ownership_WHO = as.data.frame(table(malawi_WHO$Ownership))
 ownership_WHO
 
 ## bar plot of ownership
-plot_ownership_WHO = ggplot(ownership_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity")
+plot_ownership_WHO = ggplot(ownership_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
+plot_ownership_WHO = plot_ownership_WHO + labs(y = "Frequency") + coord_flip() + theme_pubclean() + theme(axis.title.y = element_blank()) + ggtitle("Ownership")
 plot_ownership_WHO
 ```
 
