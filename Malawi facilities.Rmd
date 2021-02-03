@@ -259,137 +259,6 @@ map_static_WHO$facility_type_9 = as.factor(map_static_WHO$facility_type_9)
 map_static_WHO$facility_type_9 = factor(map_static_WHO$facility_type_9, levels = c("Hospital", "Community Health Unit", "Health Centre", "Health Clinic", "Health Post"))
 ```
 
-```{r}
-# Facilities per region 
-
-# MFL, admin1
-facility_admin1_MFL = st_intersects(malawi_admin1, malawi_facilities_MFL, sparse = TRUE)
-malawi_admin1$facility = lengths(facility_admin1_MFL)
-head(malawi_admin1) # gave no. of facilities per region
-
-# Intersect opposite to get admin1 region for each facility 
-admin1_facility_MFL = unlist(st_intersects(malawi_facilities_MFL, malawi_admin1, sparse = TRUE))
-malawi_facilities_MFL$region_admin1 = lengths(admin1_facility_MFL) # gives error, no. of rows are less in                                                                          admin1_, why?
-malawi_facilities_MFL$region_admin1 <- NULL
-
-# trying to figure out which points don't intersect 
-
-intersect_admin1_MFL = st_intersection(malawi_facilities_MFL, malawi_admin1) # returns data frame of matches
-
-intersect_admin1_MFL = intersect_admin1_MFL[-c(10:15)] # remove columns 
-intersect_admin1_MFL
-
-# adding region data for admin1 to intersect_admin1_MFL (using admin1_facility_MFL from previously)
-intersect_admin1_MFL$region_admin1 = admin1_facility_MFL
-intersect_admin1_MFL 
-
-# working out which facilities did not intersect
-intersect_admin1_MFL = as.data.frame(intersect_admin1_MFL) # convert to data frame to use in anti_join
-head(intersect_admin1_MFL)
-
-no_intersect_admin1_MFL = anti_join(malawi_facilities_MFL, intersect_admin1_MFL) # shows which did not                                                                                          intersect 
-no_intersect_admin1_MFL
-
-# input 0s in the region_admin1 column
-no_intersect_admin1_MFL$region_admin1 = rep.int(0, times = 61)
-
-# turn back into sf 
-no_intersect_admin1_MFL = st_as_sf(no_intersect_admin1_MFL) 
-intersect_admin1_MFL = st_as_sf(intersect_admin1_MFL) 
-
-no_intersect_admin1_MFL
-intersect_admin1_MFL
-
-# bind data frames together to get new data frame with admin1 regions assigned correctly
-malawi_facilities_MFL_admin1 = rbind(intersect_admin1_MFL, no_intersect_admin1_MFL)
-tail(malawi_facilities_MFL_admin1) # !!! something is wrong, facilities with same district show different 
-                                   # value for region. Was data for district inputted incorrectly or are 
-                                   # coordinates wrong? Carry on for now.
-                    
-# use new data frame for plots
-
-
-# Map with admin1 layer 
-tmap_admin1_MFL = tmap_facilities_MFL + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
-tmap_admin1_MFL
-
-# Plot of facilities in each admin1 region 
-
-## transform columns
-malawi_facilities_MFL_admin1$region_admin1 = as.factor(malawi_facilities_MFL_admin1$region_admin1)
-malawi_facilities_MFL_admin1$TYPE = as.factor(malawi_facilities_MFL_admin1$TYPE)
-
-## freq of facility types by region
-df_facility_admin1_MFL = as.data.frame(table(malawi_facilities_MFL_admin1$region_admin1, 
-                                             malawi_facilities_MFL_admin1$TYPE))
-df_facility_admin1_MFL
-
-## subsetting by region for plots 
-
-# region 1 = Central 
-admin1_region1 = filter(df_facility_admin1_MFL, Var1 == 1)
-
-admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
-admin1_region1_plot
-
-# region 2 = Southern
-admin1_region2 = filter(df_facility_admin1_MFL, Var1 == 2)
-
-admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip()
-admin1_region2_plot
-
-# region 3 = Northern
-admin1_region3 = filter(df_facility_admin1_MFL, Var1 == 3)
-
-admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
-admin1_region3_plot
-
-
-# MFL, admin2 
-facility_admin2_MFL = st_intersects(malawi_admin2, malawi_facilities_MFL, sparse = TRUE)
-malawi_admin2$facility = lengths(facility_admin2_MFL)
-
-malawi_admin2 # 27 districts 
-sum(malawi_admin2$facility) # also has 1365 intersections
-malawi_admin2$facility # Lilongwe = 163 facilities
-                       # Blantyre = 154 
-                       # Mzimba = 95
-
-
-# WHO, admin1
-malawi_WHO$Admin1 = as.factor(malawi_WHO$Admin1)
-df_facility_admin1_WHO = as.data.frame(table(malawi_WHO$Admin1, 
-                                             malawi_WHO$`Facility type`))
-df_facility_admin1_WHO
-
-# Central
-admin1_central = filter(df_facility_admin1_WHO, Var1 == "Central")
-
-admin1_central_plot = ggplot(admin1_central, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 200))
-admin1_central_plot
-
-# Southern
-admin1_southern = filter(df_facility_admin1_WHO, Var1 == "Southern")
-
-admin1_southern_plot = ggplot(admin1_southern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip()
-admin1_southern_plot
-
-# Northern
-admin1_northern = filter(df_facility_admin1_WHO, Var1 == "Northern")
-
-admin1_northern_plot = ggplot(admin1_northern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 200))
-admin1_northern_plot
-
-# WHO, admin2 
-facility_admin2_WHO = st_intersects(malawi_admin2, sf_malawi_WHO, sparse = TRUE)
-malawi_admin2$facility_WHO = lengths(facility_admin2_WHO)
-malawi_admin2$facility_WHO # Mzimba = 56 facilities
-                           # Lilongwe = 52 
-                           # Mangochi = 45 
-```
-
-
-
   Qs to address?:
   
   1. How many facilities are in the same location across the MFL and WHO datasets?
@@ -421,6 +290,144 @@ intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal plac
 ```
 
 
+```{r, message=FALSE}
+# Facilities per region 
+
+# MFL, admin1
+facility_admin1_MFL = st_intersects(malawi_admin1, malawi_facilities_MFL, sparse = TRUE)
+malawi_admin1$facility = lengths(facility_admin1_MFL)
+head(malawi_admin1) # gave no. of facilities per region
+
+# Intersect opposite to get admin1 region for each facility 
+admin1_facility_MFL = unlist(st_intersects(malawi_facilities_MFL, malawi_admin1, sparse = TRUE))
+
+# error when adding admin1_facility_MFL data to malawi_facilities_MFL, 
+# no. of rows are less in admin1_, why?
+
+
+# trying to figure out which points don't intersect 
+
+intersect_admin1_MFL = st_intersection(malawi_facilities_MFL, malawi_admin1) # returns data frame of matches
+
+intersect_admin1_MFL = intersect_admin1_MFL[-c(10:15)] # remove columns 
+
+# adding region data for admin1 to intersect_admin1_MFL (using admin1_facility_MFL from previously)
+intersect_admin1_MFL$region_admin1 = admin1_facility_MFL
+
+# working out which facilities did not intersect
+intersect_admin1_MFL = as.data.frame(intersect_admin1_MFL) # convert to data frame to use in anti_join
+head(intersect_admin1_MFL)
+
+no_intersect_admin1_MFL = anti_join(malawi_facilities_MFL, intersect_admin1_MFL) # shows which did not intersect 
+
+# input 0s in the region_admin1 column
+no_intersect_admin1_MFL$region_admin1 = rep.int(0, times = 61)
+
+# turn back into sf 
+no_intersect_admin1_MFL = st_as_sf(no_intersect_admin1_MFL) 
+intersect_admin1_MFL = st_as_sf(intersect_admin1_MFL) 
+
+# bind data frames together to get new data frame with admin1 regions assigned correctly
+malawi_facilities_MFL_admin1 = rbind(intersect_admin1_MFL, no_intersect_admin1_MFL)
+tail(malawi_facilities_MFL_admin1) # !!! something is wrong, facilities with same district show different 
+                                   # value for region. Was data for district inputted incorrectly or are 
+                                   # coordinates wrong? Carry on for now.
+                    
+# use new data frame for plots
+
+
+# Map with admin1 layer 
+tmap_admin1_MFL = tmap_facilities_MFL + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
+tmap_admin1_MFL
+
+# Plot of facilities in each admin1 region 
+
+## transform columns
+malawi_facilities_MFL_admin1$region_admin1 = as.factor(malawi_facilities_MFL_admin1$region_admin1)
+malawi_facilities_MFL_admin1$TYPE = as.factor(malawi_facilities_MFL_admin1$TYPE)
+
+## freq of facility types by region
+df_facility_admin1_MFL = as.data.frame(table(malawi_facilities_MFL_admin1$region_admin1, 
+                                             malawi_facilities_MFL_admin1$TYPE))
+head(df_facility_admin1_MFL)
+
+## subsetting by region for plots 
+
+# region 1 = Central 
+admin1_region1 = filter(df_facility_admin1_MFL, Var1 == 1)
+
+admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
+
+# region 2 = Southern
+admin1_region2 = filter(df_facility_admin1_MFL, Var1 == 2)
+
+admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0,250))
+
+# region 3 = Northern
+admin1_region3 = filter(df_facility_admin1_MFL, Var1 == 3)
+
+admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 150))
+
+
+# MFL, admin2 
+facility_admin2_MFL = st_intersects(malawi_admin2, malawi_facilities_MFL, sparse = TRUE)
+malawi_admin2$facility = lengths(facility_admin2_MFL)
+
+sum(malawi_admin2$facility) # also has 1365 intersections
+malawi_admin2$facility 
+# Lilongwe = 163 facilities
+# Blantyre = 154 
+# Mzimba = 95
+
+
+# WHO, admin1
+
+# Map with admin1 layer
+tmap_admin1_WHO = tmap_facilities_WHO + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
+tmap_admin1_WHO
+
+# freq of facility types by region
+malawi_WHO$Admin1 = as.factor(malawi_WHO$Admin1)
+df_facility_admin1_WHO = as.data.frame(table(malawi_WHO$Admin1, 
+                                             malawi_WHO$`Facility type`))
+head(df_facility_admin1_WHO)
+
+# Central
+admin1_central = filter(df_facility_admin1_WHO, Var1 == "Central")
+
+admin1_central_plot = ggplot(admin1_central, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
+
+# Southern
+admin1_southern = filter(df_facility_admin1_WHO, Var1 == "Southern")
+
+admin1_southern_plot = ggplot(admin1_southern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0,250))
+
+# Northern
+admin1_northern = filter(df_facility_admin1_WHO, Var1 == "Northern")
+
+admin1_northern_plot = ggplot(admin1_northern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 150))
+
+# WHO, admin2 
+facility_admin2_WHO = st_intersects(malawi_admin2, sf_malawi_WHO, sparse = TRUE)
+malawi_admin2$facility_WHO = lengths(facility_admin2_WHO)
+malawi_admin2$facility_WHO 
+# Mzimba = 56 facilities
+# Lilongwe = 52 
+# Mangochi = 45 
+
+# final plots
+plot_admin1_central = align_plots(admin1_region1_plot, admin1_central_plot, align = "v")
+ggdraw(plot_admin1_central[[1]])
+ggdraw(plot_admin1_central[[2]])
+
+plot_admin1_southern = align_plots(admin1_region2_plot, admin1_southern_plot, align = "v")
+ggdraw(plot_admin1_southern[[1]])
+ggdraw(plot_admin1_southern[[2]])
+
+plot_admin1_northern = align_plots(admin1_region3_plot, admin1_northern_plot, align = "v")
+ggdraw(plot_admin1_northern[[1]])
+ggdraw(plot_admin1_northern[[2]])
+```
 
    
    
