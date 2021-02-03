@@ -325,8 +325,67 @@ df_facility_admin1_MFL = as.data.frame(table(malawi_facilities_MFL_admin1$region
 df_facility_admin1_MFL
 
 ## subsetting by region for plots 
-df_facility_admin1_MFL
 
+# region 1 = Central 
+admin1_region1 = filter(df_facility_admin1_MFL, Var1 == 1)
+
+admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
+admin1_region1_plot
+
+# region 2 = Southern
+admin1_region2 = filter(df_facility_admin1_MFL, Var1 == 2)
+
+admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip()
+admin1_region2_plot
+
+# region 3 = Northern
+admin1_region3 = filter(df_facility_admin1_MFL, Var1 == 3)
+
+admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
+admin1_region3_plot
+
+
+# MFL, admin2 
+facility_admin2_MFL = st_intersects(malawi_admin2, malawi_facilities_MFL, sparse = TRUE)
+malawi_admin2$facility = lengths(facility_admin2_MFL)
+
+malawi_admin2 # 27 districts 
+sum(malawi_admin2$facility) # also has 1365 intersections
+malawi_admin2$facility # Lilongwe = 163 facilities
+                       # Blantyre = 154 
+                       # Mzimba = 95
+
+
+# WHO, admin1
+malawi_WHO$Admin1 = as.factor(malawi_WHO$Admin1)
+df_facility_admin1_WHO = as.data.frame(table(malawi_WHO$Admin1, 
+                                             malawi_WHO$`Facility type`))
+df_facility_admin1_WHO
+
+# Central
+admin1_central = filter(df_facility_admin1_WHO, Var1 == "Central")
+
+admin1_central_plot = ggplot(admin1_central, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 200))
+admin1_central_plot
+
+# Southern
+admin1_southern = filter(df_facility_admin1_WHO, Var1 == "Southern")
+
+admin1_southern_plot = ggplot(admin1_southern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip()
+admin1_southern_plot
+
+# Northern
+admin1_northern = filter(df_facility_admin1_WHO, Var1 == "Northern")
+
+admin1_northern_plot = ggplot(admin1_northern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 200))
+admin1_northern_plot
+
+# WHO, admin2 
+facility_admin2_WHO = st_intersects(malawi_admin2, sf_malawi_WHO, sparse = TRUE)
+malawi_admin2$facility_WHO = lengths(facility_admin2_WHO)
+malawi_admin2$facility_WHO # Mzimba = 56 facilities
+                           # Lilongwe = 52 
+                           # Mangochi = 45 
 ```
 
 
