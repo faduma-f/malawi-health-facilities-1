@@ -290,7 +290,9 @@ intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal plac
 ```
 
 
-```{r, message=FALSE}
+  4. How many facilities per admin1 and admin2 regions?
+
+```{r, message=FALSE, warning=FALSE}
 # Facilities per region 
 
 # MFL, admin1
@@ -329,9 +331,10 @@ intersect_admin1_MFL = st_as_sf(intersect_admin1_MFL)
 
 # bind data frames together to get new data frame with admin1 regions assigned correctly
 malawi_facilities_MFL_admin1 = rbind(intersect_admin1_MFL, no_intersect_admin1_MFL)
-tail(malawi_facilities_MFL_admin1) # !!! something is wrong, facilities with same district show different 
-                                   # value for region. Was data for district inputted incorrectly or are 
-                                   # coordinates wrong? Carry on for now.
+tail(malawi_facilities_MFL_admin1) 
+# !!! something is wrong, facilities with same district show different 
+# value for region. Was data for district inputted incorrectly or are 
+# coordinates wrong? Carry on for now.
                     
 # use new data frame for plots
 
