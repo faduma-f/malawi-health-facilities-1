@@ -70,7 +70,7 @@ head(facility_types_MFL)
 
 ## bar plot of no. of facility types 
 plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
-plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
+plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 6), legend.text = element_text(size = 6), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
 plot_facility_types_MFL
 
 par(mar=c(11,4,4,4))
@@ -87,11 +87,11 @@ malawi_MFL$OWNERSHIP = factor(malawi_MFL$OWNERSHIP, levels = c("Government", "Pr
 
 # Number of each type of ownership
 ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
-ownership_MFL
+ownership_MFL$Var1 = stringr::str_wrap(ownership_MFL$Var1, 16)
 
 ## bar plot of ownership
 plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
-plot_ownership_MFL = plot_ownership_MFL + labs(y = "Frequency") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold"))
+plot_ownership_MFL = plot_ownership_MFL + labs(x="Ownership", y = "Frequency") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold"))
 plot_ownership_MFL
 ```
 
@@ -133,7 +133,7 @@ head(facility_types_WHO)
 
 ## bar plot of original facility types 
 plot_facility_types_WHO = ggplot(facility_types_WHO, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
-plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(legend.title = element_text(size = 9), legend.text = element_text(size = 9), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom") + expand_limits(y=c(0,600))
+plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 6), legend.text = element_text(size = 6), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom") + expand_limits(y=c(0,600))
 plot_facility_types_WHO
 
 ```
@@ -152,7 +152,7 @@ RC_facility_types_WHO
 
 ## bar plot of reclassified facility types 
 plot_RC_facility_types_WHO = ggplot(RC_facility_types_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
-plot_RC_facility_types_WHO = plot_RC_facility_types_WHO + labs(y = "Frequency") + coord_flip() + theme_pubclean() + theme(axis.title.y = element_blank()) + ggtitle("Reclassified facility types")
+plot_RC_facility_types_WHO = plot_RC_facility_types_WHO + labs(x = "Reclassified facility types", y = "Frequency") + coord_flip() + theme_pubclean() + theme(plot.title = element_text(face = "bold")) + ggtitle("WHO") + expand_limits(y=c(0,600))
 plot_RC_facility_types_WHO
 ```
    
@@ -166,7 +166,7 @@ ownership_WHO
 
 ## bar plot of ownership
 plot_ownership_WHO = ggplot(ownership_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
-plot_ownership_WHO = plot_ownership_WHO + labs(y = "Frequency") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold")) + expand_limits(y=c(0,600))
+plot_ownership_WHO = plot_ownership_WHO + labs(x="Ownership", y = "Frequency") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold")) + expand_limits(y=c(0,600))
 plot_ownership_WHO
 ```
 
