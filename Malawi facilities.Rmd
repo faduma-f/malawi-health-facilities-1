@@ -20,6 +20,8 @@ library(afriadmin)
 library(tmap)
 library(cowplot)
 
+options(max.print = 10000)
+
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
 
@@ -56,6 +58,7 @@ Overview:
 - Facility locations managed by the Ministry of Health and Population Malawi. WHO guidance states that it should be updated at least every 2 years. Last update is unknown. 
 - Locations in lat-long, CRS set to WGS84
 - 1546 facilities reported, data includes name, ownership, type of facility and functional status.
+- 1426 facilities after removing NAs
 - 9 types of facilities, including unclassified. Number of each type is shown. Top 3 are clinics (585), health centers (520) and Dispensaries (179). All are primary level. What is private? 
   
 ```{r, class.source = 'fold-hide'}
@@ -208,7 +211,8 @@ ggdraw(plot_ownership[[2]])
 ```{r, echo=FALSE, fig.show='hide'}
 
 # choose admin level
-malawi_admin <- afriadmin("malawi",level=2, plot='sf')
+malawi_admin2 = afriadmin("malawi",level=2, plot='sf')
+malawi_admin1 = afriadmin("malawi", level = 1, plot = "sf")
 
 # static WHO facility location map
 map_static_WHO = afrihealthsites("malawi", datasource='who', plot='sf')
@@ -221,14 +225,14 @@ map_static_WHO = afrihealthsites("malawi", datasource='who', plot='sf')
 tmap_mode("view")
 
 ## admin map
-tmap_admin = tm_shape(st_geometry(malawi_admin)) + tm_borders()
+tmap_admin2 = tm_shape(st_geometry(malawi_admin2)) + tm_borders()
 
 ## MFL facility locations
-tmap_facilities_MFL = tmap_admin + tm_shape(malawi_facilities_MFL) + tm_dots(col = "TYPE", palette = "-viridis") + tm_layout(frame = FALSE, asp = 2, title = "MFL", title.position = c("left", "top"))
+tmap_facilities_MFL = tmap_admin2 + tm_shape(malawi_facilities_MFL) + tm_dots(col = "TYPE", palette = "-viridis") + tm_layout(frame = FALSE, asp = 2, title = "MFL", title.position = c("left", "top"))
 tmap_facilities_MFL
 
 ## WHO facility locations
-tmap_facilities_WHO = tmap_admin + tm_shape(map_static_WHO) + tm_dots(col = "facility_type_9", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
+tmap_facilities_WHO = tmap_admin2 + tm_shape(map_static_WHO) + tm_dots(col = "facility_type_9", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
 tmap_facilities_WHO
 
 
@@ -254,6 +258,77 @@ map_static_WHO$facility_type_9 = as.factor(map_static_WHO$facility_type_9)
 # re-ordering the levels
 map_static_WHO$facility_type_9 = factor(map_static_WHO$facility_type_9, levels = c("Hospital", "Community Health Unit", "Health Centre", "Health Clinic", "Health Post"))
 ```
+
+```{r}
+# Facilities per region 
+
+# MFL, admin1
+facility_admin1_MFL = st_intersects(malawi_admin1, malawi_facilities_MFL, sparse = TRUE)
+malawi_admin1$facility = lengths(facility_admin1_MFL)
+head(malawi_admin1) # gave no. of facilities per region
+
+# Intersect opposite to get admin1 region for each facility 
+admin1_facility_MFL = unlist(st_intersects(malawi_facilities_MFL, malawi_admin1, sparse = TRUE))
+malawi_facilities_MFL$region_admin1 = lengths(admin1_facility_MFL) # gives error, no. of rows are less in                                                                          admin1_, why?
+malawi_facilities_MFL$region_admin1 <- NULL
+
+# trying to figure out which points don't intersect 
+
+intersect_admin1_MFL = st_intersection(malawi_facilities_MFL, malawi_admin1) # returns data frame of matches
+
+intersect_admin1_MFL = intersect_admin1_MFL[-c(10:15)] # remove columns 
+intersect_admin1_MFL
+
+# adding region data for admin1 to intersect_admin1_MFL (using admin1_facility_MFL from previously)
+intersect_admin1_MFL$region_admin1 = admin1_facility_MFL
+intersect_admin1_MFL 
+
+# working out which facilities did not intersect
+intersect_admin1_MFL = as.data.frame(intersect_admin1_MFL) # convert to data frame to use in anti_join
+head(intersect_admin1_MFL)
+
+no_intersect_admin1_MFL = anti_join(malawi_facilities_MFL, intersect_admin1_MFL) # shows which did not                                                                                          intersect 
+no_intersect_admin1_MFL
+
+# input 0s in the region_admin1 column
+no_intersect_admin1_MFL$region_admin1 = rep.int(0, times = 61)
+
+# turn back into sf 
+no_intersect_admin1_MFL = st_as_sf(no_intersect_admin1_MFL) 
+intersect_admin1_MFL = st_as_sf(intersect_admin1_MFL) 
+
+no_intersect_admin1_MFL
+intersect_admin1_MFL
+
+# bind data frames together to get new data frame with admin1 regions assigned correctly
+malawi_facilities_MFL_admin1 = rbind(intersect_admin1_MFL, no_intersect_admin1_MFL)
+tail(malawi_facilities_MFL_admin1) # !!! something is wrong, facilities with same district show different 
+                                   # value for region. Was data for district inputted incorrectly or are 
+                                   # coordinates wrong? Carry on for now.
+                    
+# use new data frame for plots
+
+
+# Map with admin1 layer 
+tmap_admin1_MFL = tmap_facilities_MFL + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
+tmap_admin1_MFL
+
+# Plot of facilities in each admin1 region 
+
+## transform columns
+malawi_facilities_MFL_admin1$region_admin1 = as.factor(malawi_facilities_MFL_admin1$region_admin1)
+malawi_facilities_MFL_admin1$TYPE = as.factor(malawi_facilities_MFL_admin1$TYPE)
+
+## freq of facility types by region
+df_facility_admin1_MFL = as.data.frame(table(malawi_facilities_MFL_admin1$region_admin1, 
+                                             malawi_facilities_MFL_admin1$TYPE))
+df_facility_admin1_MFL
+
+## subsetting by region for plots 
+df_facility_admin1_MFL
+
+```
+
 
 
   Qs to address?:
