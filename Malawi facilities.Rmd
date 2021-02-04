@@ -20,8 +20,6 @@ library(afriadmin)
 library(tmap)
 library(cowplot)
 
-options(max.print = 10000)
-
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
 
@@ -73,6 +71,7 @@ head(facility_types_MFL)
 
 ## bar plot of no. of facility types 
 plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
+
 plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 6), legend.text = element_text(size = 6), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
 plot_facility_types_MFL
 
@@ -288,6 +287,7 @@ intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal plac
 
 # Qs 3 - how many/which are within 50m of another facility? 
 ```
+
 
 
   4. How many facilities per admin1 and admin2 regions?
