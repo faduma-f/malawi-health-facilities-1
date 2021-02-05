@@ -19,6 +19,7 @@ library(ggpubr)
 library(afriadmin)
 library(tmap)
 library(cowplot)
+library(forcats)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -68,11 +69,17 @@ malawi_MFL$TYPE = factor(malawi_MFL$TYPE, levels = c("Central Hospital", "Distri
 # Number of each type + ownership
 facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE, malawi_MFL$OWNERSHIP))
 head(facility_types_MFL)
+levels(facility_types_MFL$Var2)
+
+# Only showing government, private and CHAM ownership
+facility_types_MFL$new_Var2 = revalue(facility_types_MFL$Var2, c("Aquaid Lifeline"="Other", "Non-Government"="Other", "Parastatal"="Other", "Mission/Faith-based (other than CHAM)"="Other"))
+facility_types_MFL$new_Var2 = factor(facility_types_MFL$new_Var2, levels = c("Government", "Private", "Christian Health Association of Malawi (CHAM)", "Other"))
+
 
 ## bar plot of no. of facility types 
-plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
+plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=new_Var2)) + geom_bar(position = "stack", stat = "identity")
 
-plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 6), legend.text = element_text(size = 6), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
+plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_minimal() + ggtitle("MFL") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 8, face = "bold"), legend.text = element_text(size = 8), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
 plot_facility_types_MFL
 
 par(mar=c(11,4,4,4))
@@ -89,12 +96,13 @@ malawi_MFL$OWNERSHIP = factor(malawi_MFL$OWNERSHIP, levels = c("Government", "Pr
 
 # Number of each type of ownership
 ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
-ownership_MFL$Var1 = stringr::str_wrap(ownership_MFL$Var1, 16)
 
 ## bar plot of ownership
-plot_ownership_MFL = ggplot(ownership_MFL, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
-plot_ownership_MFL = plot_ownership_MFL + labs(x="Ownership", y = "Frequency") + coord_flip() + theme_pubclean() + ggtitle("MFL") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold"))
+plot_ownership_MFL = ggplot(ownership_MFL, aes(x=forcats::fct_relabel(Var1,stringr::str_wrap,width = 16), y=Freq)) + geom_bar(stat = "identity", fill="slategray")
+
+plot_ownership_MFL = plot_ownership_MFL + labs(x="Ownership", y = "Frequency") + coord_flip() + theme_minimal() + ggtitle("MFL") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold"))
 plot_ownership_MFL
+
 ```
 
 
@@ -135,7 +143,7 @@ head(facility_types_WHO)
 
 ## bar plot of original facility types 
 plot_facility_types_WHO = ggplot(facility_types_WHO, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
-plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 6), legend.text = element_text(size = 6), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom") + expand_limits(y=c(0,600))
+plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_minimal() + ggtitle("WHO") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 8, face = "bold"), legend.text = element_text(size = 8), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom") + expand_limits(y=c(0,600))
 plot_facility_types_WHO
 
 ```
@@ -154,7 +162,7 @@ RC_facility_types_WHO
 
 ## bar plot of reclassified facility types 
 plot_RC_facility_types_WHO = ggplot(RC_facility_types_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
-plot_RC_facility_types_WHO = plot_RC_facility_types_WHO + labs(x = "Reclassified facility types", y = "Frequency") + coord_flip() + theme_pubclean() + theme(plot.title = element_text(face = "bold")) + ggtitle("WHO") + expand_limits(y=c(0,600))
+plot_RC_facility_types_WHO = plot_RC_facility_types_WHO + labs(x = "Reclassified facility types", y = "Frequency") + coord_flip() + theme_minimal() + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold")) + ggtitle("WHO") + expand_limits(y=c(0,600))
 plot_RC_facility_types_WHO
 ```
    
@@ -168,7 +176,7 @@ ownership_WHO
 
 ## bar plot of ownership
 plot_ownership_WHO = ggplot(ownership_WHO, aes(x=Var1, y=Freq)) + geom_bar(stat = "identity", fill="slategray")
-plot_ownership_WHO = plot_ownership_WHO + labs(x="Ownership", y = "Frequency") + coord_flip() + theme_pubclean() + ggtitle("WHO") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold")) + expand_limits(y=c(0,600))
+plot_ownership_WHO = plot_ownership_WHO + labs(x="Ownership", y = "Frequency") + coord_flip() + theme_minimal() + ggtitle("WHO") + theme(axis.title.y = element_blank(), plot.title = element_text(face = "bold")) + expand_limits(y=c(0,600))
 plot_ownership_WHO
 ```
 
@@ -219,6 +227,21 @@ map_static_WHO = afrihealthsites("malawi", datasource='who', plot='sf')
 ```
 
 ```{r, echo=FALSE}
+### changing character class to factor for the categorical variable column 
+
+### MFL
+
+malawi_facilities_MFL$TYPE = as.factor(malawi_facilities_MFL$TYPE)
+
+# re-ordering the levels 
+malawi_facilities_MFL$TYPE = factor(malawi_facilities_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified")) 
+
+### WHO
+map_static_WHO$`Facility type` = as.factor(map_static_WHO$`Facility type`)
+
+# re-ordering the levels
+map_static_WHO$`Facility type` = factor(map_static_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital", "Mission Hospital", "Rural Hospital", "Community Hospital", "Health Centre", "Clinic", "Health Post/Dispensary"))
+
 # tmap
 
 tmap_mode("view")
@@ -231,7 +254,7 @@ tmap_facilities_MFL = tmap_admin2 + tm_shape(malawi_facilities_MFL) + tm_dots(co
 tmap_facilities_MFL
 
 ## WHO facility locations
-tmap_facilities_WHO = tmap_admin2 + tm_shape(map_static_WHO) + tm_dots(col = "facility_type_9", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
+tmap_facilities_WHO = tmap_admin2 + tm_shape(map_static_WHO) + tm_dots(col = "Facility type", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
 tmap_facilities_WHO
 
 
@@ -241,21 +264,6 @@ tmap_arrange(tmap_facilities_MFL, tmap_facilities_WHO, ncol = 2) # side by side
 tmap_facilities_MFL_WHO = tmap_facilities_WHO + tm_shape(malawi_facilities_MFL) + tm_dots(col = "TYPE", palette = "-YlOrRd", alpha = 0.7) + tm_layout(frame = FALSE, asp = 2, title = "MFL & WHO", title.position = c("left", "top")) 
 tmap_facilities_MFL_WHO # combined
 
-### changing character class to factor for the categorical variable column 
-
-### MFL
-
-malawi_facilities_MFL$TYPE = as.factor(malawi_facilities_MFL$TYPE)
-
-# re-ordering the levels 
-malawi_facilities_MFL$TYPE = factor(malawi_facilities_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified")) 
-
-### WHO
-
-map_static_WHO$facility_type_9 = as.factor(map_static_WHO$facility_type_9)
-
-# re-ordering the levels
-map_static_WHO$facility_type_9 = factor(map_static_WHO$facility_type_9, levels = c("Hospital", "Community Health Unit", "Health Centre", "Health Clinic", "Health Post"))
 ```
 
   Qs to address?:
@@ -290,7 +298,11 @@ intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal plac
 
 
 
+
+
   4. How many facilities per admin1 and admin2 regions?
+     - Top 3 districts for MFL are: Lilongwe (163 facilities), Blantyre (154) and Mzimba (95)
+     - Top 3 districts for WHO are: Mzimba (56 facilities), Lilongwe (52) and Mangochi (45)
 
 ```{r, message=FALSE, warning=FALSE}
 # Facilities per region 
@@ -311,7 +323,7 @@ admin1_facility_MFL = unlist(st_intersects(malawi_facilities_MFL, malawi_admin1,
 
 intersect_admin1_MFL = st_intersection(malawi_facilities_MFL, malawi_admin1) # returns data frame of matches
 
-intersect_admin1_MFL = intersect_admin1_MFL[-c(10:15)] # remove columns 
+intersect_admin1_MFL = intersect_admin1_MFL[-c(10:16)] # remove columns 
 
 # adding region data for admin1 to intersect_admin1_MFL (using admin1_facility_MFL from previously)
 intersect_admin1_MFL$region_admin1 = admin1_facility_MFL
@@ -343,6 +355,11 @@ tail(malawi_facilities_MFL_admin1)
 tmap_admin1_MFL = tmap_facilities_MFL + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
 tmap_admin1_MFL
 
+## Map - number of facilities per region
+tmap_admin1_MFL2 = tm_shape(st_geometry(malawi_admin1)) + tm_borders() + tm_shape(malawi_admin1) + tm_fill("facility")
+
+tmap_admin1_MFL2
+
 # Plot of facilities in each admin1 region 
 
 ## transform columns
@@ -359,17 +376,17 @@ head(df_facility_admin1_MFL)
 # region 1 = Central 
 admin1_region1 = filter(df_facility_admin1_MFL, Var1 == 1)
 
-admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
+admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Central Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 250))
 
 # region 2 = Southern
 admin1_region2 = filter(df_facility_admin1_MFL, Var1 == 2)
 
-admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0,250))
+admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0,250))
 
 # region 3 = Northern
 admin1_region3 = filter(df_facility_admin1_MFL, Var1 == 3)
 
-admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 150))
+admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 150))
 
 
 # MFL, admin2 
@@ -377,10 +394,11 @@ facility_admin2_MFL = st_intersects(malawi_admin2, malawi_facilities_MFL, sparse
 malawi_admin2$facility = lengths(facility_admin2_MFL)
 
 sum(malawi_admin2$facility) # also has 1365 intersections
-malawi_admin2$facility 
-# Lilongwe = 163 facilities
-# Blantyre = 154 
-# Mzimba = 95
+
+# Map - number of facilities per district
+tmap_admin2_MFL = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility")
+
+tmap_admin2_MFL
 
 
 # WHO, admin1
@@ -388,6 +406,17 @@ malawi_admin2$facility
 # Map with admin1 layer
 tmap_admin1_WHO = tmap_facilities_WHO + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
 tmap_admin1_WHO
+
+## intersecting for Map
+facility_admin1_WHO = st_intersects(malawi_admin1, sf_malawi_WHO, sparse = TRUE)
+malawi_admin1$facility_WHO = lengths(facility_admin1_WHO)
+head(malawi_admin1)
+
+## Map - number of facilities per region
+tmap_admin1_WHO2 = tm_shape(st_geometry(malawi_admin1)) + tm_borders() + tm_shape(malawi_admin1) + tm_fill("facility_WHO")
+
+tmap_admin1_WHO2
+
 
 # freq of facility types by region
 malawi_WHO$Admin1 = as.factor(malawi_WHO$Admin1)
@@ -398,25 +427,26 @@ head(df_facility_admin1_WHO)
 # Central
 admin1_central = filter(df_facility_admin1_WHO, Var1 == "Central")
 
-admin1_central_plot = ggplot(admin1_central, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Central Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 250))
+admin1_central_plot = ggplot(admin1_central, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Central Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 250))
 
 # Southern
 admin1_southern = filter(df_facility_admin1_WHO, Var1 == "Southern")
 
-admin1_southern_plot = ggplot(admin1_southern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0,250))
+admin1_southern_plot = ggplot(admin1_southern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0,250))
 
 # Northern
 admin1_northern = filter(df_facility_admin1_WHO, Var1 == "Northern")
 
-admin1_northern_plot = ggplot(admin1_northern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_pubclean() + coord_flip() + expand_limits(y=c(0, 150))
+admin1_northern_plot = ggplot(admin1_northern, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "WHO Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 150))
 
 # WHO, admin2 
 facility_admin2_WHO = st_intersects(malawi_admin2, sf_malawi_WHO, sparse = TRUE)
 malawi_admin2$facility_WHO = lengths(facility_admin2_WHO)
-malawi_admin2$facility_WHO 
-# Mzimba = 56 facilities
-# Lilongwe = 52 
-# Mangochi = 45 
+
+# Map - number of facilities per district 
+tmap_admin2_WHO = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility_WHO")
+
+tmap_admin2_WHO
 
 # final plots
 plot_admin1_central = align_plots(admin1_region1_plot, admin1_central_plot, align = "v")
