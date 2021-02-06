@@ -20,6 +20,7 @@ library(afriadmin)
 library(tmap)
 library(cowplot)
 library(forcats)
+library(colorspace)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -254,7 +255,7 @@ tmap_facilities_MFL = tmap_admin2 + tm_shape(malawi_facilities_MFL) + tm_dots(co
 tmap_facilities_MFL
 
 ## WHO facility locations
-tmap_facilities_WHO = tmap_admin2 + tm_shape(map_static_WHO) + tm_dots(col = "Facility type", palette = "viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
+tmap_facilities_WHO = tmap_admin2 + tm_shape(map_static_WHO) + tm_dots(col = "Facility type", palette = "-viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
 tmap_facilities_WHO
 
 
@@ -356,7 +357,7 @@ tmap_admin1_MFL = tmap_facilities_MFL + tm_shape(st_geometry(malawi_admin1)) + t
 tmap_admin1_MFL
 
 ## Map - number of facilities per region
-tmap_admin1_MFL2 = tm_shape(st_geometry(malawi_admin1)) + tm_borders() + tm_shape(malawi_admin1) + tm_fill("facility")
+tmap_admin1_MFL2 = tm_shape(st_geometry(malawi_admin1)) + tm_borders() + tm_shape(malawi_admin1) + tm_fill("facility", style = "cat", palette = sequential_hcl(4, palette = "YlGnBu", rev = TRUE), title = "MFL facilities")
 
 tmap_admin1_MFL2
 
@@ -396,7 +397,7 @@ malawi_admin2$facility = lengths(facility_admin2_MFL)
 sum(malawi_admin2$facility) # also has 1365 intersections
 
 # Map - number of facilities per district
-tmap_admin2_MFL = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility")
+tmap_admin2_MFL = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility", palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "MFL facilities") + tm_layout(title = "MFL")
 
 tmap_admin2_MFL
 
@@ -413,7 +414,7 @@ malawi_admin1$facility_WHO = lengths(facility_admin1_WHO)
 head(malawi_admin1)
 
 ## Map - number of facilities per region
-tmap_admin1_WHO2 = tm_shape(st_geometry(malawi_admin1)) + tm_borders() + tm_shape(malawi_admin1) + tm_fill("facility_WHO")
+tmap_admin1_WHO2 = tm_shape(st_geometry(malawi_admin1)) + tm_borders() + tm_shape(malawi_admin1) + tm_fill("facility_WHO", style = "cat", title = "WHO facilities", palette = sequential_hcl(4, palette = "YlGnBu", rev = TRUE))
 
 tmap_admin1_WHO2
 
@@ -444,7 +445,7 @@ facility_admin2_WHO = st_intersects(malawi_admin2, sf_malawi_WHO, sparse = TRUE)
 malawi_admin2$facility_WHO = lengths(facility_admin2_WHO)
 
 # Map - number of facilities per district 
-tmap_admin2_WHO = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility_WHO")
+tmap_admin2_WHO = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility_WHO", palette = sequential_hcl(4, palette = "YlGnBu", rev = TRUE), title = "WHO facilities")
 
 tmap_admin2_WHO
 
