@@ -200,7 +200,6 @@ Analysis:
 plot_facilities = align_plots(plot_facility_types_MFL, plot_facility_types_WHO, align = "v")
 ggdraw(plot_facilities[[1]])
 ggdraw(plot_facilities[[2]])
-
 ```
 
 
@@ -270,7 +269,13 @@ tmap_facilities_MFL_WHO # combined
   Qs to address?:
   
   1. How many facilities are in the same location across the MFL and WHO datasets?
+  
+  - 2 points intersect directly and so are same up to 5 decimal places (WHO data has all coordinates to 5 decimal places). Check fewer decimal places to see if more intersect? 
+  
   2. Do same facilities share same names/other attributes?
+  
+  - Ownership is the same for both facilities but Euthini is registered as a rural hospital in the MFL data while in the WHO data, it is a health centre. The name reflects this. 
+  
   3. The ones that aren't, are they within 50m of another facility? 
 
 ```{r}
@@ -289,12 +294,6 @@ sf_malawi_WHO = st_set_crs(sf_malawi_WHO, 4326)
 ## st_intersection
 intersect_WHO_MFL = st_intersection(x=sf_malawi_WHO, y=malawi_facilities_MFL)
 intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal places?
-
-
-# Qs 2 - Do they share same attributes
-## ownership is same, 1 name is same, Euthini registered as a hospital in MFL but as a health centre in WHO
-
-# Qs 3 - how many/which are within 50m of another facility? 
 ```
 
 
@@ -302,8 +301,9 @@ intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal plac
 
 
   4. How many facilities per admin1 and admin2 regions?
-     - Top 3 districts for MFL are: Lilongwe (163 facilities), Blantyre (154) and Mzimba (95)
-     - Top 3 districts for WHO are: Mzimba (56 facilities), Lilongwe (52) and Mangochi (45)
+  
+  - Top 3 districts for MFL are: Lilongwe (163 facilities), Blantyre (154) and Mzimba (95)
+  - Top 3 districts for WHO are: Mzimba (56 facilities), Lilongwe (52) and Mangochi (45)
 
 ```{r, message=FALSE, warning=FALSE}
 # Facilities per region 
@@ -464,6 +464,28 @@ ggdraw(plot_admin1_northern[[2]])
 ```
 
    
+   
+   5. Automating the process of sorting facility types into 4 tiers as (Falchetta et al., 2020). Tier 1: dispensary or basic health post; Tier 2: health center; Tier 3: provincial hospital or regional hospital; and Tier 4: central hospital or national hospital.
+   
+   - Function that recognises the different facility types and in different languages (downside = similar to manual process, hard to account for all variations)
+   - Use code/id/reference codes provided with data, do they refer to type of facility? Couldn't find how the MoH codes with the MFL data for Malawi were assigned.
+   - Use satellite imagery to determine size of building and use that to sort into tiers (downside = many ways this can go wrong, what would the criteria be?)
+   
+```{r}
+# Function that recognises different facility types 
+sort_facilities = function(data, facility_column) {
+   for(i in levels(facility_column)) {
+      if(grepl("Central", facility_column, fixed = TRUE) == TRUE){
+         output = grep("Central", facility_column, fixed = TRUE)
+         t4 = slice(data, c(output[]))
+      }
+  return(t4)
+ }
+}
+
+
+```
+
    
    
    
