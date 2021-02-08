@@ -276,7 +276,6 @@ tmap_facilities_MFL_WHO # combined
   
   - Ownership is the same for both facilities but Euthini is registered as a rural hospital in the MFL data while in the WHO data, it is a health centre. The name reflects this. 
   
-  3. The ones that aren't, are they within 50m of another facility? 
 
 ```{r}
 # Qs 1 - how many intersect?
@@ -297,6 +296,14 @@ intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal plac
 ```
 
 
+
+  3. The ones that aren't, are they within 50m of another facility?
+  
+```{r}
+# Try merge_points()
+merge_points("malawi", datasources=c('who', 'healthsites'), dist_same_m=50)
+
+```
 
 
 
@@ -470,6 +477,7 @@ ggdraw(plot_admin1_northern[[2]])
    - Function that recognises the different facility types and in different languages (downside = similar to manual process, hard to account for all variations)
    - Use code/id/reference codes provided with data, do they refer to type of facility? Couldn't find how the MoH codes with the MFL data for Malawi were assigned.
    - Use satellite imagery to determine size of building and use that to sort into tiers (downside = many ways this can go wrong, what would the criteria be?)
+   - Use capacity data if available? 
    
 ```{r}
 # Function that recognises different facility types 
