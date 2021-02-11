@@ -313,8 +313,8 @@ merge_points("malawi", datasources=c('who', 'healthsites'), dist_same_m=50)
   - Top 3 districts for WHO are: Mzimba (56 facilities), Lilongwe (52) and Mangochi (45)
 
 ```{r, message=FALSE, warning=FALSE}
-# Facilities per region 
 
+# Facilities per region 
 # MFL, admin1
 facility_admin1_MFL = st_intersects(malawi_admin1, malawi_facilities_MFL, sparse = TRUE)
 malawi_admin1$facility = lengths(facility_admin1_MFL)
@@ -331,32 +331,27 @@ admin1_facility_MFL = unlist(st_intersects(malawi_facilities_MFL, malawi_admin1,
 
 intersect_admin1_MFL = st_intersection(malawi_facilities_MFL, malawi_admin1) # returns data frame of matches
 
-intersect_admin1_MFL = intersect_admin1_MFL[-c(10:16)] # remove columns 
-
-# adding region data for admin1 to intersect_admin1_MFL (using admin1_facility_MFL from previously)
-intersect_admin1_MFL$region_admin1 = admin1_facility_MFL
-
 # working out which facilities did not intersect
 intersect_admin1_MFL = as.data.frame(intersect_admin1_MFL) # convert to data frame to use in anti_join
 head(intersect_admin1_MFL)
 
 no_intersect_admin1_MFL = anti_join(malawi_facilities_MFL, intersect_admin1_MFL) # shows which did not intersect 
 
-# input 0s in the region_admin1 column
-no_intersect_admin1_MFL$region_admin1 = rep.int(0, times = 61)
-
 # turn back into sf 
 no_intersect_admin1_MFL = st_as_sf(no_intersect_admin1_MFL) 
 intersect_admin1_MFL = st_as_sf(intersect_admin1_MFL) 
 
-# bind data frames together to get new data frame with admin1 regions assigned correctly
-malawi_facilities_MFL_admin1 = rbind(intersect_admin1_MFL, no_intersect_admin1_MFL)
-tail(malawi_facilities_MFL_admin1) 
 # !!! something is wrong, facilities with same district show different 
 # value for region. Was data for district inputted incorrectly or are 
-# coordinates wrong? Carry on for now.
-                    
-# use new data frame for plots
+# coordinates wrong?
+
+
+## Trying to find the source of the error 
+
+## adding admin1_facility_MFL was the issue (the results from st_intersect),
+## st_intersect and st_intersection are not computed in the same order
+## just use intersect_admin1_MFL for the plots, don't need to combine with facilities that did not
+## intersect
 
 
 # Map with admin1 layer 
@@ -371,30 +366,30 @@ tmap_admin1_MFL2
 # Plot of facilities in each admin1 region 
 
 ## transform columns
-malawi_facilities_MFL_admin1$region_admin1 = as.factor(malawi_facilities_MFL_admin1$region_admin1)
-malawi_facilities_MFL_admin1$TYPE = as.factor(malawi_facilities_MFL_admin1$TYPE)
+intersect_admin1_MFL$shapeName = as.factor(intersect_admin1_MFL$shapeName)
+intersect_admin1_MFL$TYPE = as.factor(intersect_admin1_MFL$TYPE)
 
 ## freq of facility types by region
-df_facility_admin1_MFL = as.data.frame(table(malawi_facilities_MFL_admin1$region_admin1, 
-                                             malawi_facilities_MFL_admin1$TYPE))
+df_facility_admin1_MFL = as.data.frame(table(intersect_admin1_MFL$shapeName, 
+                                             intersect_admin1_MFL$TYPE))
 head(df_facility_admin1_MFL)
 
 ## subsetting by region for plots 
 
 # region 1 = Central 
-admin1_region1 = filter(df_facility_admin1_MFL, Var1 == 1)
+admin1_region1 = filter(df_facility_admin1_MFL, Var1 == "Central Region")
 
-admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Central Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 250))
+admin1_region1_plot = ggplot(admin1_region1, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Central Region (total facilities=1365)") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 250))
 
 # region 2 = Southern
-admin1_region2 = filter(df_facility_admin1_MFL, Var1 == 2)
+admin1_region2 = filter(df_facility_admin1_MFL, Var1 == "Southern Region")
 
-admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Southern Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0,250))
+admin1_region2_plot = ggplot(admin1_region2, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Southern Region (total facilities=1365)") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0,250))
 
 # region 3 = Northern
-admin1_region3 = filter(df_facility_admin1_MFL, Var1 == 3)
+admin1_region3 = filter(df_facility_admin1_MFL, Var1 == "Northern Region")
 
-admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Northern Region") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 150))
+admin1_region3_plot = ggplot(admin1_region3, aes(x=Var2, y=Freq)) + geom_bar(stat = "identity", fill="slategray") + labs(x="Facility type", y="Frequency", title = "MFL Northern Region (total facilities=1365)") + theme(plot.title = element_text(face = "bold")) + theme_minimal() + coord_flip() + expand_limits(y=c(0, 150))
 
 
 # MFL, admin2 
@@ -408,8 +403,12 @@ tmap_admin2_MFL = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape
 
 tmap_admin2_MFL
 
+# district for each facility, intersect the other way
+intersect_admin2_MFL = st_intersection(malawi_facilities_MFL, malawi_admin2)
+head(intersect_admin2_MFL)
 
-# WHO, admin1
+
+# WHO, admin1 (dataset already has admin1 column)
 
 # Map with admin1 layer
 tmap_admin1_WHO = tmap_facilities_WHO + tm_shape(st_geometry(malawi_admin1)) + tm_borders()
@@ -456,6 +455,11 @@ tmap_admin2_WHO = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape
 
 tmap_admin2_WHO
 
+# district for each facility, intersect the other way 
+intersect_admin2_WHO = st_intersection(sf_malawi_WHO, malawi_admin2)
+head(intersect_admin2_WHO)
+
+
 # final plots
 plot_admin1_central = align_plots(admin1_region1_plot, admin1_central_plot, align = "v")
 ggdraw(plot_admin1_central[[1]])
@@ -475,21 +479,12 @@ ggdraw(plot_admin1_northern[[2]])
    5. Automating the process of sorting facility types into 4 tiers as (Falchetta et al., 2020). Tier 1: dispensary or basic health post; Tier 2: health center; Tier 3: provincial hospital or regional hospital; and Tier 4: central hospital or national hospital.
    
    - Function that recognises the different facility types and in different languages (downside = similar to manual process, hard to account for all variations)
-   - Use code/id/reference codes provided with data, do they refer to type of facility? Couldn't find how the MoH codes with the MFL data for Malawi were assigned.
-   - Use satellite imagery to determine size of building and use that to sort into tiers (downside = many ways this can go wrong, what would the criteria be?)
+   - Use code/id/reference codes provided with data, do they refer to type of facility? Couldn't find how the MoH codes with the MFL data for Malawi were assigned
    - Use capacity data if available? 
    
 ```{r}
 # Function that recognises different facility types 
-sort_facilities = function(data, facility_column) {
-   for(i in levels(facility_column)) {
-      if(grepl("Central", facility_column, fixed = TRUE) == TRUE){
-         output = grep("Central", facility_column, fixed = TRUE)
-         t4 = slice(data, c(output[]))
-      }
-  return(t4)
- }
-}
+
 
 
 ```
