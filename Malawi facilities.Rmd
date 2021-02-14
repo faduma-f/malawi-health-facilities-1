@@ -21,6 +21,7 @@ library(tmap)
 library(cowplot)
 library(forcats)
 library(colorspace)
+library(readr)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -477,15 +478,65 @@ ggdraw(plot_admin1_northern[[2]])
    
    
    5. Automating the process of sorting facility types into 4 tiers as (Falchetta et al., 2020). Tier 1: dispensary or basic health post; Tier 2: health center; Tier 3: provincial hospital or regional hospital; and Tier 4: central hospital or national hospital.
-   
-   - Function that recognises the different facility types and in different languages (downside = similar to manual process, hard to account for all variations)
-   - Use code/id/reference codes provided with data, do they refer to type of facility? Couldn't find how the MoH codes with the MFL data for Malawi were assigned
-   - Use capacity data if available? 
-   
-```{r}
-# Function that recognises different facility types 
 
+Ways to apply the Falchetta classification:
 
+- Function that recognises the different facility types and in different languages (downside = similar to manual process, hard to account for all variations)
+- Use code/id/reference codes provided with data, do they refer to type of facility? Couldn't find how the MoH codes with the MFL data for Malawi were assigned
+- Use capacity data if available? 
+   
+```{r, message=FALSE, warning=FALSE}
+# Falchetta classification with Malawi MFL 
+for(i in 1:nrow(malawi_facilities_MFL)) {
+   if(malawi_facilities_MFL$TYPE[i] == "Central Hospital"){
+      malawi_facilities_MFL[i, "Tier"] = 4
+   }
+   else if(malawi_facilities_MFL$TYPE[i] == "District Hospital" | malawi_facilities_MFL$TYPE[i] == "Hospital"){
+      malawi_facilities_MFL[i, "Tier"] = 3
+   }
+   else if(malawi_facilities_MFL$TYPE[i] == "Health Centre" | malawi_facilities_MFL$TYPE[i] == "Clinic"){
+      malawi_facilities_MFL[i, "Tier"] = 2
+   }
+   else if(malawi_facilities_MFL$TYPE[i] == "Dispensary" | malawi_facilities_MFL$TYPE[i] == "Health Post"){
+      malawi_facilities_MFL[i, "Tier"] = 1
+   }
+   else{
+      malawi_facilities_MFL[i, "Tier"] = 0
+   }
+}
+
+# With Zambia MFL 
+zambia_MFL <- read_csv("https://raw.githubusercontent.com/MOH-Zambia/MFL/master/geography/data/facility_list.csv")
+zambia_MFL$facility_type = as.factor(zambia_MFL$facility_type)
+levels(zambia_MFL$facility_type)
+
+# https://healthmarketinnovations.org/sites/default/files/Final_%20CHMI%20Zambia%20profile.pdf states 3 broad
+# levels,
+# Primary = health centres and health posts
+# Secondary = Provincial and district hospitals
+# Tertiary = Central hospitals
+# https://www.severemalaria.org/countries/zambia/zambia-health-system - describes hospital levels
+
+for(i in 1:nrow(zambia_MFL)) {
+   if(is.na(zambia_MFL$facility_type[i]) == TRUE){
+      zambia_MFL[i, "Tier"] = 0
+   }
+   else if(zambia_MFL$facility_type[i] == "Hospital - Level 3"){
+      zambia_MFL[i, "Tier"] = 4
+   }
+   else if(zambia_MFL$facility_type[i] == "Hospital - Level 2" | zambia_MFL$facility_type[i] == "Hospital - Level 1"){
+      zambia_MFL[i, "Tier"] = 3
+   }
+   else if(zambia_MFL$facility_type[i] == "Hospital Affiliated Health Centre" | zambia_MFL$facility_type[i] == "Rural Health Centre" |zambia_MFL$facility_type[i] == "Zonal Health Centre" | zambia_MFL$facility_type[i] == "Urban Health Centre"){
+      zambia_MFL[i, "Tier"] = 2
+   }
+   else if(zambia_MFL$facility_type[i] == "Border Health Post" | zambia_MFL$facility_type[i] == "Health Post"){
+      zambia_MFL[i, "Tier"] = 1
+   }
+   else{
+      zambia_MFL[i, "Tier"] = 0 
+   }
+}
 
 ```
 
