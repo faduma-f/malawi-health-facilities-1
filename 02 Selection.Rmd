@@ -1,0 +1,76 @@
+---
+title: "02 Selection"
+author: '35762384'
+date: "17/02/2021"
+output: 
+  html_document: 
+    keep_md: yes
+    code_folding: show
+---
+
+Figures
+
+- Columns of data 
+```{r}
+head(malawi_MFL)
+head(malawi_WHO)
+```
+
+- Facility plots 
+```{r}
+plot_facilities = align_plots(plot_facility_types_MFL, plot_facility_types_WHO, align = "v")
+ggdraw(plot_facilities[[1]])
+ggdraw(plot_facilities[[2]])
+```
+
+- Maps 
+```{r, message=FALSE}
+tmap_admin2_MFL
+tmap_admin2_WHO
+tmap_facilities_MFL_WHO
+```
+
+- Missing values/wrong coordinates, 181 in the MFL (this includes NA's and coordinates that did not intersect with admin levels) and 9 in the WHO data. None are the same facilities/share same names. 
+```{r}
+# MFL - 1546 before omitting NA's, then 1427.
+# 62 coordinates did not intersect with admin data - now 1365
+
+# using anti_join() to see which facilities were omitted 
+df_malawi_facilities_MFL = as.data.frame(malawi_facilities_MFL) # convert to data frame to use in anti_join
+
+NA_MFL = anti_join(malawi_MFL, df_malawi_facilities_MFL) # 119 missing coordinates in MFL
+
+# adding the number of wrong coordinates - 61 
+no_intersect_admin1_MFL_1 = no_intersect_admin1_MFL[ ,-c(10, 11)]
+NA_MFL_1 = NA_MFL[, -c(10, 11)]
+no_intersect_admin1_MFL_1 = st_set_geometry(no_intersect_admin1_MFL_1, NULL)
+names(NA_MFL_1)[3] = "COMMON.NAME"
+names(NA_MFL_1)[9] = "DATE.OPENED"
+
+NA_MFL = rbind(NA_MFL_1, no_intersect_admin1_MFL_1) # combined dataframe of NA and wrong coordinates in MFL
+
+# WHO - 648 with 9 missing coordinates, now 639
+NA_WHO = anti_join(malawi_WHO, new_malawi_WHO)
+```
+
+- Proportion that are privately owned in the MFL data.  
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
