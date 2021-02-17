@@ -7,8 +7,44 @@ output:
     keep_md: yes
     code_folding: show
 ---
+  
+  
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(sf)
+library(readxl)
+library(dplyr)
+library(plyr)
+library(ggplot2)
+library(afrihealthsites)
+library(ggpubr)
+library(afriadmin)
+library(tmap)
+library(cowplot)
+library(forcats)
+library(colorspace)
+library(readr)
 
-Figures
+# Install Malawi MFL
+malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
+
+# Convert to sf
+
+## omit NA's
+new_malawi_MFL = na.omit(malawi_MFL)
+
+## transform geometry columns into numeric 
+new_malawi_MFL = transform(new_malawi_MFL, LATITUDE = as.numeric(LATITUDE), 
+                                           LONGITUDE = as.numeric(LONGITUDE))
+
+## convert to sf object
+malawi_facilities_MFL = st_as_sf(new_malawi_MFL, coords = c("LONGITUDE", "LATITUDE"), dim = "XY")
+
+malawi_facilities_MFL = st_set_crs(malawi_facilities_MFL, 4326)
+
+malawi_WHO <- afrihealthsites("malawi", datasource='who', plot=FALSE, returnclass='dataframe')
+```
+
+##### Figures  
 
 - Columns of data 
 ```{r}
@@ -17,21 +53,93 @@ head(malawi_WHO)
 ```
 
 - Facility plots 
-```{r}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# MFL
+# Re-order the facility types
+malawi_MFL$TYPE = as.factor(malawi_MFL$TYPE)
+
+malawi_MFL$TYPE = factor(malawi_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified"))
+
+# Number of each type + ownership
+facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE, malawi_MFL$OWNERSHIP))
+
+# Only showing government, private and CHAM ownership
+facility_types_MFL$new_Var2 = revalue(facility_types_MFL$Var2, c("Aquaid Lifeline"="Other", "Non-Government"="Other", "Parastatal"="Other", "Mission/Faith-based (other than CHAM)"="Other"))
+facility_types_MFL$new_Var2 = factor(facility_types_MFL$new_Var2, levels = c("Government", "Private", "Christian Health Association of Malawi (CHAM)", "Other"))
+
+
+## bar plot of no. of facility types 
+plot_facility_types_MFL = ggplot(facility_types_MFL, aes(x=Var1, y=Freq, fill=new_Var2)) + geom_bar(position = "stack", stat = "identity")
+
+plot_facility_types_MFL = plot_facility_types_MFL + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_minimal() + ggtitle("MFL") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 8, face = "bold"), legend.text = element_text(size = 8), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom")
+
+# WHO
+# Re order facility types and ownership 
+malawi_WHO$`Facility type` = as.factor(malawi_WHO$`Facility type`)
+malawi_WHO$`Facility type` = factor(malawi_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital", "Mission Hospital", "Rural Hospital", "Community Hospital", "Health Centre", "Clinic", "Health Post/Dispensary"))
+
+malawi_WHO$Ownership = as.factor(malawi_WHO$Ownership)
+malawi_WHO$Ownership = factor(malawi_WHO$Ownership, levels = c("MoH", "FBO", "Local authority", "NGO"))
+
+# No. of original facility types + ownership
+facility_types_WHO = as.data.frame(table(malawi_WHO$`Facility type`, malawi_WHO$Ownership))
+
+## bar plot of original facility types 
+plot_facility_types_WHO = ggplot(facility_types_WHO, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(position = "stack", stat = "identity")
+plot_facility_types_WHO = plot_facility_types_WHO + labs(x = "Facility types", y = "Frequency", fill="Ownership") + scale_fill_brewer(palette = "Set2") + coord_flip() + theme_minimal() + ggtitle("WHO") + theme(axis.title.y = element_blank(), legend.title = element_text(size = 8, face = "bold"), legend.text = element_text(size = 8), plot.title = element_text(face = "bold", hjust = 0), legend.position = "bottom") + expand_limits(y=c(0,600))
+
 plot_facilities = align_plots(plot_facility_types_MFL, plot_facility_types_WHO, align = "v")
 ggdraw(plot_facilities[[1]])
 ggdraw(plot_facilities[[2]])
 ```
 
 - Maps 
-```{r, message=FALSE}
-tmap_admin2_MFL
-tmap_admin2_WHO
-tmap_facilities_MFL_WHO
+```{r, echo=FALSE, message=FALSE, fig.show='hide', warning=FALSE}
+malawi_admin1 = afriadmin("malawi", level = 1, plot = "sf")
+malawi_admin2 = afriadmin("malawi",level=2, plot='sf')
+
+new_malawi_WHO = na.omit(malawi_WHO) ## omit NA
+
+sf_malawi_WHO = st_as_sf(new_malawi_WHO, coords = c("Long", "Lat"), dim = "XY")
+sf_malawi_WHO = st_set_crs(sf_malawi_WHO, 4326)
+
+tmap_mode("view")
 ```
 
-- Missing values/wrong coordinates, 181 in the MFL (this includes NA's and coordinates that did not intersect with admin levels) and 9 in the WHO data. None are the same facilities/share same names. 
-```{r}
+
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+# MFL 
+facility_admin2_MFL = st_intersects(malawi_admin2, malawi_facilities_MFL, sparse = TRUE)
+malawi_admin2$facility = lengths(facility_admin2_MFL)
+
+tmap_admin2_MFL = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility", palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "MFL facilities") + tm_layout(title = "MFL")
+
+tmap_admin2_MFL
+
+# WHO
+facility_admin2_WHO = st_intersects(malawi_admin2, sf_malawi_WHO, sparse = TRUE)
+malawi_admin2$facility_WHO = lengths(facility_admin2_WHO)
+
+tmap_admin2_WHO = tm_shape(st_geometry(malawi_admin2)) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("facility_WHO", palette = sequential_hcl(4, palette = "YlGnBu", rev = TRUE), title = "WHO facilities")
+
+tmap_admin2_WHO
+
+# Point locations - combined 
+
+tmap_admin2 = tm_shape(st_geometry(malawi_admin2)) + tm_borders()
+
+tmap_facilities_WHO = tmap_admin2 + tm_shape(sf_malawi_WHO) + tm_dots(col = "Facility type", palette = "-viridis") + tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
+
+tmap_facilities_MFL_WHO = tmap_facilities_WHO + tm_shape(malawi_facilities_MFL) + tm_dots(col = "TYPE", palette = "-YlOrRd", alpha = 0.7) + tm_layout(frame = FALSE, asp = 2, title = "MFL & WHO", title.position = c("left", "top"))
+
+tmap_facilities_MFL_WHO
+```
+  
+##### Missing values/wrong coordinates  
+
+- 181 in the MFL (this includes NA's and coordinates that did not intersect with admin levels) and 9 in the WHO data. None are the same facilities/share same names. 
+```{r, message=FALSE, warning=FALSE}
 # MFL - 1546 before omitting NA's, then 1427.
 # 62 coordinates did not intersect with admin data - now 1365
 
@@ -40,7 +148,13 @@ df_malawi_facilities_MFL = as.data.frame(malawi_facilities_MFL) # convert to dat
 
 NA_MFL = anti_join(malawi_MFL, df_malawi_facilities_MFL) # 119 missing coordinates in MFL
 
-# adding the number of wrong coordinates - 61 
+# adding the number of wrong coordinates - 61
+intersect_admin1_MFL = st_intersection(malawi_facilities_MFL, malawi_admin1) # returns data frame of matches
+
+intersect_admin1_MFL = as.data.frame(intersect_admin1_MFL) # convert to data frame to use in anti_join
+
+no_intersect_admin1_MFL = anti_join(malawi_facilities_MFL, intersect_admin1_MFL) # working out which facilities did not intersect
+
 no_intersect_admin1_MFL_1 = no_intersect_admin1_MFL[ ,-c(10, 11)]
 NA_MFL_1 = NA_MFL[, -c(10, 11)]
 no_intersect_admin1_MFL_1 = st_set_geometry(no_intersect_admin1_MFL_1, NULL)
@@ -52,8 +166,8 @@ NA_MFL = rbind(NA_MFL_1, no_intersect_admin1_MFL_1) # combined dataframe of NA a
 # WHO - 648 with 9 missing coordinates, now 639
 NA_WHO = anti_join(malawi_WHO, new_malawi_WHO)
 ```
-
-- Proportion that are privately owned in the MFL data.  
+  
+##### Proportion that are privately owned in the MFL data.  
 ```{r}
 
 ```
