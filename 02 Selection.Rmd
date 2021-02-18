@@ -23,6 +23,10 @@ library(cowplot)
 library(forcats)
 library(colorspace)
 library(readr)
+library(waffle)
+library(sunburstR)
+library(htmltools)
+library(htmlwidgets)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -167,9 +171,37 @@ NA_MFL = rbind(NA_MFL_1, no_intersect_admin1_MFL_1) # combined dataframe of NA a
 NA_WHO = anti_join(malawi_WHO, new_malawi_WHO)
 ```
   
-##### Proportion that are privately owned in the MFL data.  
+##### Proportion that are privately owned in the MFL data  
+- 30.3% of facilities are privately owned (433/1427)
+- Top 3 types are clinics (356), dispensaries (45) and hospitals (16)  
 ```{r}
+private_MFL = filter(malawi_facilities_MFL, OWNERSHIP == "Private")
+# 433 private facilities, 30.3%
 
+# which types are private?
+private_MFL$TYPE = as.factor(private_MFL$TYPE)
+types_private_MFL = as.data.frame(table(private_MFL$TYPE))
+types_private_MFL
+```
+
+##### Proportion of facility types in each district 
+```{r, message=FALSE, warning=FALSE}
+# district per facility (does not include the 62 facilities)
+intersect_admin2_MFL = st_intersection(malawi_facilities_MFL, malawi_admin2)
+intersect_admin2_MFL$TYPE = as.factor(intersect_admin2_MFL$TYPE)
+intersect_admin2_MFL$shapeName = as.factor(intersect_admin2_MFL$shapeName)
+
+by_district_MFL = as.data.frame(table(intersect_admin2_MFL$TYPE, intersect_admin2_MFL$shapeName))
+head(by_district_MFL)
+
+# pie charts for each district 
+balaka_MFL = filter(by_district_MFL, Var2 == "Balaka")
+balaka_MFL = filter(balaka_MFL, Freq > 0)
+balaka_MFL = balaka_MFL[ , -c(2)]
+
+## plot
+balaka_plot_MFL = sunburst(balaka_MFL)
+balaka_plot_MFL
 ```
 
 

@@ -42,7 +42,7 @@ new_malawi_MFL = transform(new_malawi_MFL, LATITUDE = as.numeric(LATITUDE),
 ## convert to sf object
 malawi_facilities_MFL = st_as_sf(new_malawi_MFL, coords = c("LONGITUDE", "LATITUDE"), dim = "XY")
 
-malawi_facilities_MFL = st_set_crs(malawi_facilities_MFL, 4326) ## set CRS, is WGS84 right?
+malawi_facilities_MFL = st_set_crs(malawi_facilities_MFL, 4326) ## set CRS
 
 head(malawi_facilities_MFL)
 ```
