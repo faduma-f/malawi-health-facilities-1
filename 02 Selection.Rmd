@@ -5,10 +5,8 @@ date: "17/02/2021"
 output: 
   html_document: 
     keep_md: yes
-    code_folding: show
----
-  
-  
+    code_folding: show  
+---  
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(sf)
 library(readxl)
@@ -47,7 +45,7 @@ malawi_facilities_MFL = st_set_crs(malawi_facilities_MFL, 4326)
 
 malawi_WHO <- afrihealthsites("malawi", datasource='who', plot=FALSE, returnclass='dataframe')
 ```
-
+  
 ##### Figures  
 
 - Columns of data 
@@ -172,7 +170,8 @@ NA_WHO = anti_join(malawi_WHO, new_malawi_WHO)
 ```
   
 ##### Proportion that are privately owned in the MFL data  
-- 30.3% of facilities are privately owned (433/1427)
+
+- 30.3% of facilities are privately owned (433/1427)  
 - Top 3 types are clinics (356), dispensaries (45) and hospitals (16)  
 ```{r}
 private_MFL = filter(malawi_facilities_MFL, OWNERSHIP == "Private")
@@ -186,24 +185,106 @@ types_private_MFL
 
 ##### Proportion of facility types in each district 
 ```{r, message=FALSE, warning=FALSE}
-# district per facility (does not include the 62 facilities)
+# district per facility (does not include the 62 facilities) MFL
 intersect_admin2_MFL = st_intersection(malawi_facilities_MFL, malawi_admin2)
 intersect_admin2_MFL$TYPE = as.factor(intersect_admin2_MFL$TYPE)
 intersect_admin2_MFL$shapeName = as.factor(intersect_admin2_MFL$shapeName)
 
+# types by district
 by_district_MFL = as.data.frame(table(intersect_admin2_MFL$TYPE, intersect_admin2_MFL$shapeName))
 head(by_district_MFL)
 
-# pie charts for each district 
+# WHO 
+intersect_admin2_WHO = st_intersection(sf_malawi_WHO, malawi_admin2)
+intersect_admin2_WHO$Facility.type = as.factor(intersect_admin2_WHO$Facility.type)
+intersect_admin2_WHO$shapeName = as.factor(intersect_admin2_WHO$shapeName)
+
+by_district_WHO = as.data.frame(table(intersect_admin2_WHO$Facility.type, intersect_admin2_WHO$shapeName))
+head(by_district_WHO)
+
+# Example pie charts for district 
+
+## Balaka 
 balaka_MFL = filter(by_district_MFL, Var2 == "Balaka")
 balaka_MFL = filter(balaka_MFL, Freq > 0)
 balaka_MFL = balaka_MFL[ , -c(2)]
 
 ## plot
-balaka_plot_MFL = sunburst(balaka_MFL)
+balaka_plot_MFL = sunburst(balaka_MFL, count = TRUE, legend = list(w=120))
 balaka_plot_MFL
+
+## 
+balaka_WHO = filter(by_district_WHO, Var2 == "Balaka")
+balaka_WHO = filter(balaka_WHO, Freq > 0)
+balaka_WHO = balaka_WHO[ , -c(2)]
+
+## plot
+balaka_plot_WHO = sund2b(balaka_WHO, rootLabel = "Facilities")
+balaka_plot_WHO
+
+## Lilongwe 
+lilongwe_MFL = filter(by_district_MFL, Var2 == "Lilongwe")
+lilongwe_MFL = filter(lilongwe_MFL, Freq > 0)
+lilongwe_MFL = lilongwe_MFL[ , -c(2)]
+
+## plot
+lilongwe_plot_MFL = sund2b(lilongwe_MFL, rootLabel = "Facilities")
+lilongwe_plot_MFL
+
+## 
+lilongwe_WHO = filter(by_district_WHO, Var2 == "Lilongwe")
+lilongwe_WHO = filter(lilongwe_WHO, Freq > 0)
+lilongwe_WHO = lilongwe_WHO[ , -c(2)]
+
+## plot
+lilongwe_plot_WHO = sund2b(lilongwe_WHO, rootLabel = "Facilities")
+lilongwe_plot_WHO
+```
+  
+##### Duplicates within dataset  
+
+- 22 names in MFL appear more than once, of these Mpepa Health Centre (2 decimal places), Liwonde Medical Clinic (identical), Ngatala Health Post (3 decimal places), Cape Maclear (identical) and LIFE STYLE PVT CLINIC (identical) have similar/same coordinates 
+- Of these, Ngatala, Cape Maclear and LIFE STYLE PVT CLINIC are most likely the same entries as other attributes are also the same. The other facilities differ in type and so might not be duplicates. 
+- 10 names in WHO appear more than once, Mkango Health Centre has same coordinates (4 decimal places) and other attributes are also the same  
+
+- Duplicate coordinates: in the MFL, 44 coordinates have been repeated at least more than once.  
+Interesting note is that 24 facilities in Blantyre have reused the same coordinates (34.3015278, -13.2512161) and they consist of 1 hospital and a mix of clinics and health centres.  All have unique names as well.  
+Same coordinates (33.7895208991213, -14.0017665100358) have also been used for 4 facilities, all in different districts.  
+Some results are due to no coordinates being available and (-1,1) for example is inputted instead.  
+No duplicates in the WHO data  
+
+- Duplicates between datasets?  
+```{r}
+# MFL
+duplicate_name_MFL = malawi_facilities_MFL[malawi_facilities_MFL$NAME %in% malawi_facilities_MFL$NAME[duplicated(malawi_facilities_MFL$NAME)], ]
+
+# WHO 
+duplicate_name_WHO = new_malawi_WHO[new_malawi_WHO$`Facility name` %in% new_malawi_WHO$`Facility name`[duplicated(new_malawi_WHO$`Facility name`)], ]
+
+# Same coordinates within dataset
+
+## MFL 
+duplicate_coord_MFL = malawi_facilities_MFL[malawi_facilities_MFL$geometry %in% malawi_facilities_MFL$geometry[duplicated(malawi_facilities_MFL$geometry)], ]
+
+## WHO 
+sf_malawi_WHO$geometry[duplicated(sf_malawi_WHO$geometry)] # none 
+
+# Blantyre 
+blantyre_duplicate_coord_MFL = filter(duplicate_coord_MFL, DISTRICT == "Blantyre")
+blantyre_MFL = filter(by_district_MFL, Var2 == "Blantyre")
+blantyre_MFL = filter(blantyre_MFL, Freq > 0)
+blantyre_MFL = blantyre_MFL[ , -c(2)]
+
+## plot
+blantyre_plot_MFL = sund2b(blantyre_MFL, rootLabel = "Facilities")
+blantyre_plot_MFL
+
 ```
 
+##### Facilities within 50km
+```{r}
+
+```
 
 
 
