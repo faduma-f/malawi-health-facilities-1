@@ -281,10 +281,16 @@ blantyre_plot_MFL
 
 ```
 
-##### Facilities within 50km
-```{r}
+##### Proportion that are Government or Faith-based owned  
+- 47.7% in MFL are Government owned  
+- 15.4% in MFL are Faith-based owned (includes CHAM)  
+- In WHO, 72.5% are Government owned  
+- In WHO, 26.3% are Faith-based owned  
 
-```
+##### Facilities within 50km  
+
+
+
 
 
 

@@ -35,7 +35,6 @@ new_malawi_MFL = na.omit(malawi_MFL)
 any(is.na(new_malawi_MFL))
 
 ## transform geometry columns into numeric 
-sapply(new_malawi_MFL, class)
 new_malawi_MFL = transform(new_malawi_MFL, LATITUDE = as.numeric(LATITUDE), 
                                            LONGITUDE = as.numeric(LONGITUDE))
 
@@ -60,12 +59,12 @@ Overview:
   
 ```{r, class.source= "fold-hide"}
 # Re-order the facility types
-malawi_MFL$TYPE = as.factor(malawi_MFL$TYPE)
+malawi_facilities_MFL$TYPE = as.factor(malawi_facilities_MFL$TYPE)
 
-malawi_MFL$TYPE = factor(malawi_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified"))
+malawi_facilities_MFL$TYPE = factor(malawi_facilities_MFL$TYPE, levels = c("Central Hospital", "District Hospital", "Hospital", "Health Centre", "Clinic", "Health Post", "Dispensary", "Private", "Unclassified"))
 
 # Number of each type + ownership
-facility_types_MFL = as.data.frame(table(malawi_MFL$TYPE, malawi_MFL$OWNERSHIP))
+facility_types_MFL = as.data.frame(table(malawi_facilities_MFL$TYPE, malawi_facilities_MFL$OWNERSHIP))
 head(facility_types_MFL)
 levels(facility_types_MFL$Var2)
 
@@ -88,12 +87,12 @@ par(mar=c(11,4,4,4))
 
 ```{r, class.source = 'fold-hide'}
 # Re-order ownership
-malawi_MFL$OWNERSHIP = as.factor(malawi_MFL$OWNERSHIP)
+malawi_facilities_MFL$OWNERSHIP = as.factor(malawi_facilities_MFL$OWNERSHIP)
 
-malawi_MFL$OWNERSHIP = factor(malawi_MFL$OWNERSHIP, levels = c("Government", "Private", "Christian Health Association of Malawi (CHAM)", "Non-Government", "Mission/Faith-based (other than CHAM)", "Other", "Parastatal", "Aquaid Lifeline"))
+malawi_facilities_MFL$OWNERSHIP = factor(malawi_facilities_MFL$OWNERSHIP, levels = c("Government", "Private", "Christian Health Association of Malawi (CHAM)", "Non-Government", "Mission/Faith-based (other than CHAM)", "Other", "Parastatal", "Aquaid Lifeline"))
 
 # Number of each type of ownership
-ownership_MFL = as.data.frame(table(malawi_MFL$OWNERSHIP))
+ownership_MFL = as.data.frame(table(malawi_facilities_MFL$OWNERSHIP))
 
 ## bar plot of ownership
 plot_ownership_MFL = ggplot(ownership_MFL, aes(x=forcats::fct_relabel(Var1,stringr::str_wrap,width = 16), y=Freq)) + geom_bar(stat = "identity", fill="slategray")
@@ -115,13 +114,22 @@ plot_ownership_MFL
 - At time of publishing, 639 facilities with 9 missing coordinates, not been updated since
 - Data includes facility name, type, ownership, source of location and reclassified facility types
 
-```{r, class.source = 'fold-hide'}
+```{r, class.source = 'fold-hide', message=FALSE, warning=FALSE}
 
 # Malawi WHO data.frame
 malawi_WHO <- afrihealthsites("malawi", datasource='who', plot=FALSE, returnclass='dataframe')
 
 head(malawi_WHO)
 
+## convert malawi_WHO to sf object
+
+class(malawi_WHO)
+any(is.na(malawi_WHO))
+
+new_malawi_WHO = na.omit(malawi_WHO) ## omit NA
+
+sf_malawi_WHO = st_as_sf(new_malawi_WHO, coords = c("Long", "Lat"), dim = "XY")
+sf_malawi_WHO = st_set_crs(sf_malawi_WHO, 4326)
 ```
 
 
@@ -129,14 +137,14 @@ head(malawi_WHO)
    
 ```{r, class.source = 'fold-hide'}
 # Re order facility types and ownership 
-malawi_WHO$`Facility type` = as.factor(malawi_WHO$`Facility type`)
-malawi_WHO$`Facility type` = factor(malawi_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital", "Mission Hospital", "Rural Hospital", "Community Hospital", "Health Centre", "Clinic", "Health Post/Dispensary"))
+sf_malawi_WHO$`Facility type` = as.factor(sf_malawi_WHO$`Facility type`)
+sf_malawi_WHO$`Facility type` = factor(sf_malawi_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital", "Mission Hospital", "Rural Hospital", "Community Hospital", "Health Centre", "Clinic", "Health Post/Dispensary"))
 
-malawi_WHO$Ownership = as.factor(malawi_WHO$Ownership)
-malawi_WHO$Ownership = factor(malawi_WHO$Ownership, levels = c("MoH", "FBO", "Local authority", "NGO"))
+sf_malawi_WHO$Ownership = as.factor(sf_malawi_WHO$Ownership)
+sf_malawi_WHO$Ownership = factor(sf_malawi_WHO$Ownership, levels = c("MoH", "FBO", "Local authority", "NGO"))
 
 # No. of original facility types + ownership
-facility_types_WHO = as.data.frame(table(malawi_WHO$`Facility type`, malawi_WHO$Ownership))
+facility_types_WHO = as.data.frame(table(sf_malawi_WHO$`Facility type`, sf_malawi_WHO$Ownership))
 head(facility_types_WHO)
 
 ## bar plot of original facility types 
@@ -151,11 +159,11 @@ plot_facility_types_WHO
    
 ```{r, class.source = 'fold-hide'}
 # Re order
-malawi_WHO$facility_type_9 = as.factor(malawi_WHO$facility_type_9)
-malawi_WHO$facility_type_9 = factor(malawi_WHO$facility_type_9, levels = c("Hospital", "Health Centre", "Health Clinic", "Health Post", "Community Health Unit"))
+sf_malawi_WHO$facility_type_9 = as.factor(sf_malawi_WHO$facility_type_9)
+sf_malawi_WHO$facility_type_9 = factor(sf_malawi_WHO$facility_type_9, levels = c("Hospital", "Health Centre", "Health Clinic", "Health Post", "Community Health Unit"))
 
 # No. of reclassified facility types
-RC_facility_types_WHO = as.data.frame(table(malawi_WHO$facility_type_9))
+RC_facility_types_WHO = as.data.frame(table(sf_malawi_WHO$facility_type_9))
 RC_facility_types_WHO
 
 ## bar plot of reclassified facility types 
@@ -169,7 +177,7 @@ plot_RC_facility_types_WHO
    
 ```{r, class.source = 'fold-hide'}
 # Types of ownership
-ownership_WHO = as.data.frame(table(malawi_WHO$Ownership))
+ownership_WHO = as.data.frame(table(sf_malawi_WHO$Ownership))
 ownership_WHO
 
 ## bar plot of ownership
@@ -277,17 +285,7 @@ tmap_facilities_MFL_WHO # combined
 ```{r}
 # Qs 1 - how many intersect?
 
-## convert malawi_WHO to sf object
-
-class(malawi_WHO)
-any(is.na(malawi_WHO))
-
-new_malawi_WHO = na.omit(malawi_WHO) ## omit NA
-
-sf_malawi_WHO = st_as_sf(new_malawi_WHO, coords = c("Long", "Lat"), dim = "XY")
-sf_malawi_WHO = st_set_crs(sf_malawi_WHO, 4326)
-
-## st_intersection
+# st_intersection
 intersect_WHO_MFL = st_intersection(x=sf_malawi_WHO, y=malawi_facilities_MFL)
 intersect_WHO_MFL ## only 2 intersect directly, so are same up to 5 decimal places?
 ```
@@ -530,7 +528,151 @@ for(i in 1:nrow(zambia_MFL)) {
    }
 }
 
+# no. of facility types in each tier across SSA
+falchetta_tiers = read_excel("~/malawi-health-facilities-1/parser_healthcare_types.xlsx")
+falchetta_tiers = falchetta_tiers[ , -1]
+
+## subset
+falchetta_tier4 = filter(falchetta_tiers, Tier == 4)
+falchetta_tier3 = filter(falchetta_tiers, Tier == 3)
+falchetta_tier2 = filter(falchetta_tiers, Tier == 2)
+falchetta_tier1 = filter(falchetta_tiers, Tier == 1)
+
+## select unique elements in types column 
+falchetta_tier4_types = unique(falchetta_tier4$ft) # 31 type names 
+falchetta_tier3_types = unique(falchetta_tier3$ft) # 62 
+falchetta_tier2_types = unique(falchetta_tier2$ft) # 57
+falchetta_tier1_types = unique(falchetta_tier1$ft) # 31
+
+# Are facility types ever put into a different tier between countries? 
+
+# Tier 4
+tier4_types_check = function(tier_types){ 
+  
+   tier4_in_other_tiers = c(rbind())
+   
+   for(i in tier_types) {
+     if(i %in% falchetta_tier3$ft == TRUE){
+     tier4_in_other_tiers = falchetta_tier3[which(i == falchetta_tier3$ft), ]
+     }
+     else if(i %in% falchetta_tier2$ft == TRUE){
+      tier4_in_other_tiers = falchetta_tier2[which(i == falchetta_tier2$ft), ]
+     }
+     else if(i %in% falchetta_tier1$ft == TRUE){
+      tier4_in_other_tiers = falchetta_tier1[which(i == falchetta_tier1$ft), ]
+     }
+     else{
+      print("No tier 4 facility types present in other tiers")
+     }
+   return(tier4_in_other_tiers)
+   }
+}
+
+tier4_types_check(falchetta_tier4_types)
+
+# Tier 3
+tier3_types_check = function(tier_types){ 
+  
+   tier3_in_other_tiers = c(rbind())
+   
+   for(i in tier_types) {
+     if(i %in% falchetta_tier4$ft == TRUE){
+     tier3_in_other_tiers = falchetta_tier4[which(i == falchetta_tier4$ft), ]
+     }
+     else if(i %in% falchetta_tier2$ft == TRUE){
+      tier3_in_other_tiers = falchetta_tier2[which(i == falchetta_tier2$ft), ]
+     }
+     else if(i %in% falchetta_tier1$ft == TRUE){
+      tier3_in_other_tiers = falchetta_tier1[which(i == falchetta_tier1$ft), ]
+     }
+     else{
+      print("No tier 3 facility types present in other tiers")
+     }
+   return(tier3_in_other_tiers)
+   }
+}
+
+tier3_types_check(falchetta_tier3_types)
+
+# Tier 2
+tier2_types_check = function(tier_types){ 
+  
+   tier2_in_other_tiers = c(rbind())
+   
+   for(i in tier_types) {
+     if(i %in% falchetta_tier3$ft == TRUE){
+     tier2_in_other_tiers = falchetta_tier3[which(i == falchetta_tier3$ft), ]
+     }
+     else if(i %in% falchetta_tier4$ft == TRUE){
+      tier2_in_other_tiers = falchetta_tier4[which(i == falchetta_tier4$ft), ]
+     }
+     else if(i %in% falchetta_tier1$ft == TRUE){
+      tier2_in_other_tiers = falchetta_tier1[which(i == falchetta_tier1$ft), ]
+     }
+     else{
+      print("No tier 2 facility types present in other tiers")
+     }
+   return(tier2_in_other_tiers)
+   }
+}
+
+tier2_types_check(falchetta_tier2_types)
+
+# Tier 1
+tier1_types_check = function(tier_types){ 
+  
+   tier1_in_other_tiers = c(rbind())
+   
+   for(i in tier_types) {
+     if(i %in% falchetta_tier3$ft == TRUE){
+     tier1_in_other_tiers = falchetta_tier3[which(i == falchetta_tier3$ft), ]
+     }
+     else if(i %in% falchetta_tier2$ft == TRUE){
+      tier1_in_other_tiers = falchetta_tier2[which(i == falchetta_tier2$ft), ]
+     }
+     else if(i %in% falchetta_tier4$ft == TRUE){
+      tier1_in_other_tiers = falchetta_tier4[which(i == falchetta_tier4$ft), ]
+     }
+     else{
+      print("No tier 1 facility types present in other tiers")
+     }
+   return(tier1_in_other_tiers)
+   }
+}
+
+tier1_types_check(falchetta_tier1_types)
+
+# All in one function?
+
+tier_types_check = function(tier4_types,tier3_types,tier2_types,tier1_types,a,b,c,d){
+ for(i in 1:4){
+    
+   types_in_other_tiers = c(rbind())
+   
+   for(i in tier4_types) {
+     if(i %in% c[[1]] == TRUE){
+     types_in_other_tiers = c[which(i == c[[1]]), ]
+     }
+     else if(i %in% b[[1]] == TRUE){
+      types_in_other_tiers = b[which(i == b[[1]]), ]
+     }
+     else if(i %in% a[[1]] == TRUE){
+      types_in_other_tiers = a[which(i == a[[1]]), ]
+     }
+     else{
+      print("No tier 4 facility types present in other tiers")
+     }
+   return(tier4_in_other_tiers)
+   tier4_types = tier3_types
+   
+      
+   
+   }
+ 
+}
+}
 ```
+
 
    
    
