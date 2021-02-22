@@ -495,6 +495,14 @@ for(i in 1:nrow(malawi_facilities_MFL)) {
    }
 }
 
+# Separate data.frame for tiers assigned to Malawi MFL 
+Facilities = c("Dispensary", "Health Post", "Clinic", "Health Centre", "Hospital", "District Hospital", "Central Hospital")
+Country = c(replicate(7, "Malawi"))
+Tier = c(1, 1, 2, 2, 3, 3, 4)
+
+Tiers_MFL = data.frame(Facilities, Country, Tier)
+Tiers_MFL
+
 # With Zambia MFL 
 zambia_MFL <- read_csv("https://raw.githubusercontent.com/MOH-Zambia/MFL/master/geography/data/facility_list.csv")
 zambia_MFL$facility_type = as.factor(zambia_MFL$facility_type)
