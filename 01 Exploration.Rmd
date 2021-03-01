@@ -22,6 +22,9 @@ library(cowplot)
 library(forcats)
 library(colorspace)
 library(readr)
+library(sunburstR)
+library(htmltools)
+library(htmlwidgets)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -463,11 +466,67 @@ ggdraw(plot_admin1_southern[[2]])
 plot_admin1_northern = align_plots(admin1_region3_plot, admin1_northern_plot, align = "v")
 ggdraw(plot_admin1_northern[[1]])
 ggdraw(plot_admin1_northern[[2]])
-```
+```  
 
-   
-   
-   5. Automating the process of sorting facility types into 4 tiers as (Falchetta et al., 2020). Tier 1: dispensary or basic health post; Tier 2: health center; Tier 3: provincial hospital or regional hospital; and Tier 4: central hospital or national hospital.
+   5.  Proportion of facility types per district  
+```{r}
+# district per facility (does not include the 62 facilities) MFL
+intersect_admin2_MFL = st_intersection(malawi_facilities_MFL, malawi_admin2)
+intersect_admin2_MFL$TYPE = as.factor(intersect_admin2_MFL$TYPE)
+intersect_admin2_MFL$shapeName = as.factor(intersect_admin2_MFL$shapeName)
+
+# types by district
+by_district_MFL = as.data.frame(table(intersect_admin2_MFL$TYPE, intersect_admin2_MFL$shapeName))
+head(by_district_MFL)
+
+# WHO 
+intersect_admin2_WHO = st_intersection(sf_malawi_WHO, malawi_admin2)
+intersect_admin2_WHO$Facility.type = as.factor(intersect_admin2_WHO$Facility.type)
+intersect_admin2_WHO$shapeName = as.factor(intersect_admin2_WHO$shapeName)
+
+by_district_WHO = as.data.frame(table(intersect_admin2_WHO$Facility.type, intersect_admin2_WHO$shapeName))
+head(by_district_WHO)
+
+# Example pie charts for district 
+
+## Balaka 
+balaka_MFL = filter(by_district_MFL, Var2 == "Balaka")
+balaka_MFL = filter(balaka_MFL, Freq > 0)
+balaka_MFL = balaka_MFL[ , -c(2)]
+
+## plot
+balaka_plot_MFL = sunburst(balaka_MFL, count = TRUE, legend = list(w=120))
+balaka_plot_MFL
+
+## 
+balaka_WHO = filter(by_district_WHO, Var2 == "Balaka")
+balaka_WHO = filter(balaka_WHO, Freq > 0)
+balaka_WHO = balaka_WHO[ , -c(2)]
+
+## plot
+balaka_plot_WHO = sund2b(balaka_WHO, rootLabel = "Facilities")
+balaka_plot_WHO
+
+## Lilongwe 
+lilongwe_MFL = filter(by_district_MFL, Var2 == "Lilongwe")
+lilongwe_MFL = filter(lilongwe_MFL, Freq > 0)
+lilongwe_MFL = lilongwe_MFL[ , -c(2)]
+
+## plot
+lilongwe_plot_MFL = sund2b(lilongwe_MFL, rootLabel = "Facilities")
+lilongwe_plot_MFL
+
+## 
+lilongwe_WHO = filter(by_district_WHO, Var2 == "Lilongwe")
+lilongwe_WHO = filter(lilongwe_WHO, Freq > 0)
+lilongwe_WHO = lilongwe_WHO[ , -c(2)]
+
+## plot
+lilongwe_plot_WHO = sund2b(lilongwe_WHO, rootLabel = "Facilities")
+lilongwe_plot_WHO
+```  
+
+   6. Automating the process of sorting facility types into 4 tiers as (Falchetta et al., 2020). Tier 1: dispensary or basic health post; Tier 2: health center; Tier 3: provincial hospital or regional hospital; and Tier 4: central hospital or national hospital.
 
 Ways to apply the Falchetta classification:
 
@@ -494,14 +553,6 @@ for(i in 1:nrow(malawi_facilities_MFL)) {
       malawi_facilities_MFL[i, "Tier"] = 0
    }
 }
-
-# Separate data.frame for tiers assigned to Malawi MFL 
-Facilities = c("Dispensary", "Health Post", "Clinic", "Health Centre", "Hospital", "District Hospital", "Central Hospital")
-Country = c(replicate(7, "Malawi"))
-Tier = c(1, 1, 2, 2, 3, 3, 4)
-
-Tiers_MFL = data.frame(Facilities, Country, Tier)
-Tiers_MFL
 
 # With Zambia MFL 
 zambia_MFL <- read_csv("https://raw.githubusercontent.com/MOH-Zambia/MFL/master/geography/data/facility_list.csv")
@@ -650,35 +701,19 @@ tier1_types_check = function(tier_types){
 
 tier1_types_check(falchetta_tier1_types)
 
-# All in one function?
+# using left-join 
 
-tier_types_check = function(tier4_types,tier3_types,tier2_types,tier1_types,a,b,c,d){
- for(i in 1:4){
-    
-   types_in_other_tiers = c(rbind())
-   
-   for(i in tier4_types) {
-     if(i %in% c[[1]] == TRUE){
-     types_in_other_tiers = c[which(i == c[[1]]), ]
-     }
-     else if(i %in% b[[1]] == TRUE){
-      types_in_other_tiers = b[which(i == b[[1]]), ]
-     }
-     else if(i %in% a[[1]] == TRUE){
-      types_in_other_tiers = a[which(i == a[[1]]), ]
-     }
-     else{
-      print("No tier 4 facility types present in other tiers")
-     }
-   return(tier4_in_other_tiers)
-   tier4_types = tier3_types
-   
-      
-   
-   }
- 
-}
-}
+## table I made, similar to parser_healthcare_types, only for Malawi
+Facilities = c("Dispensary", "Health Post", "Clinic", "Health Centre", "Hospital", "District Hospital", "Central Hospital")
+Country = c(replicate(7, "Malawi"))
+Tier = c(1, 1, 2, 2, 3, 3, 4)
+
+Tiers_MFL = data.frame(Facilities, Country, Tier)
+Tiers_MFL
+
+## left_join 
+join_MFL = left_join(malawi_facilities_MFL, Tiers_MFL, by = c("TYPE" = "Facilities"))
+
 ```
 
 
