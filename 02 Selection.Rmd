@@ -25,6 +25,8 @@ library(sunburstR)
 library(htmltools)
 library(htmlwidgets)
 library(rhealthsites)
+library(formattable)
+library(gridExtra)
 
 # Install Malawi MFL
 malawi_MFL = read_excel("~/malawi-health-facilities-1/MHFR_Facilities 1.xlsx")
@@ -100,9 +102,20 @@ The aim for this paper is to provide a reproducible summary of facility data for
 
 ##### Results  
 
-##### Data quality  
+The data downloaded contained 1546 facilities in the MFL, 648 in the WHO-KWTRP list for Malawi and 248 in healthsites.io. After removal of missing coordinates and duplicates, there are 1424, 638 and 234 facilities in the MFL, WHO-KWTRP and healthsites.io data respectively (figure 1). The MFL contains more than 6 times the number of facilities compared to healthsites.io.  
 
-The data downloaded contained 1546 facilities in the MFL, 648 in the WHO-KWTRP list for Malawi and 248 in healthsites.io. Both the MFL and WHO-KWTRP contain some missing coordinates. Upon inspection, there are 181 missing values in the MFL, which also contains 62 coordinates that are not in Malawi and were either inputted incorrectly or not known. In the WHO-KWTRP, there are 9 missing coordinates and this was stated in (Maina et al., 2019). Healthsites.io carries some missing attributes but all coordinates are present and reside within Malawi. Assessing attribute data, the WHO-KWTRP contains the least, only describing ownership and first administrative regions the facilities reside in besides the core information of name, type and location. The MFL builds on this by including second level administrative regions, which are the districts in this case, functionality, date opened and alternative facility names under the column 'Common name'. However, the website that hosts the MFL gives the option of obtaining more information on capacity and resources by selecting an individual facility. Unfortunately this aspect is not available as part of the MFL data to download. Healthsites.io by far provides a greater variety of attributes out of the 3 sources. Although for Malawi, 14% of facilities have no names assigned, which is one of the basic elements required. Other attributes are also sparse.  
+```{r Number of facilities, echo=FALSE, fig.cap="Total number of facilities recorded in each data source."}
+## table
+Sources = c("MFL", "WHO-KWTRP", "healthsites.io")
+Number = c(1424, 638, 234)
+number_3sources = data.frame(Sources, Number)
+
+# plot
+plot_3sources = ggplot(number_3sources, aes(x=Sources, y=Number)) + geom_bar(stat = "identity", width = 0.6, fill="slategray") + labs(x = "Source of data", y = "Frequency") + theme_minimal() + expand_limits(y=c(0,1500)) + coord_flip()
+plot_3sources
+```
+
+Both the MFL and WHO-KWTRP contain some missing coordinates. Upon inspection, there are 119 missing values and 62 coordinates that are not in Malawi, which were either inputted incorrectly or not known, in the MFL. In the WHO-KWTRP, there are 9 missing coordinates and this was stated in (Maina et al., 2019). Healthsites.io carries some missing attributes but all coordinates are present and reside within Malawi. Analysis into duplicates within lists shows that names for 5 facilities in the MFL were duplicated at least once and these also have similar coordinates up to at least 2 decimal places. Of these 5 facilities, 3 share the same entries in the other attribute columns while the remaining 2 differ in type. In the WHO-KWTRP, 1 health centre appears twice with the same attributes and coordinates. With healthsites.io, there are 18 names that were inputted more than once and all apart from 2 have similar coordinates up to at least 2 decimal places. Searching for duplicate coordinates rather than names also gave matches. In healthsites.io, 4 facilities that were also part of the previous 18 have identical coordinates. The time stamp on these facilities indicate that their duplicates were inputted at the exact same time. The WHO-KWTRP list does not have duplicates while the MFL returned 44 distinct coordinates that were repeated at least more than once. One of these cases is repetition of one location for 24 facilities, of different types and names, in Blantyre. However, some results are due to no coordinates being available and for example, (-1,1) was recorded instead.  
 
 ```{r NAs in data, include=FALSE}
 # MFL - 1546 before omitting NA's, then 1427.
@@ -139,9 +152,7 @@ malawi_MFL_district = as.data.frame(table(new_malawi_MFL$DISTRICT))
 malawi_MFL_district
 ```  
   
-  Analysis into duplicates within lists shows that names for 5 facilities in the MFL were duplicated at least once and these also have similar coordinates up to at least 2 decimal places. Of these 5 facilities, 3 share the same entries in the other attribute columns while the remaining 2 differ in type. In the WHO-KWTRP, 1 health centre appears twice with the same attributes and coordinates. With healthsites.io, there are 18 names that were inputted more than once and all apart from 2 have similar coordinates up to at least 2 decimal places. Searching for duplicate coordinates rather than names also gave matches. In healthsites.io, 4 facilities that were also part of the previous 18 have identical coordinates. The time stamp on these facilities indicate that their duplicates were inputted at the exact same time. The WHO-KWTRP list does not have duplicates while the MFL returned 44 distinct coordinates that were repeated at least more than once. One of these cases is repetition of one location for 24 facilities, of different types and names, in Blantyre. However, some results are due to no coordinates being available and for example, (-1,1) were recorded instead.  
-  
-  Figure 1 shows method and number of duplicate data points that have been removed. As discussed, duplicates are found by identical names or coordinates. If the coordinates and other attributes match, the duplicate is removed.  Any missing coordinates were also omitted before further analysis. The 62 incorrect coordinates in the MFL were kept and not included in this. Assessing the distribution of the missing coordinates in the MFL using the column "District", Lilongwe, Blantyre and Mangochi each have 16%, 14% and 15% of their facilities respectively with missing locations. Both Lilongwe and Blantyre also host the largest number of facilities in Malawi. The duplicates that were removed in the MFL are in Mwanza and Mangochi. From the WHO-KWTRP, only the first administrative regions of the 9 facilities removed can be determined from the data. Seven, as well as the duplicate, are present in the Southern region while the remaining are in the Northern region. Healthsites map out ones removed... . Majority of the duplicate coordinates in the MFL have facilities with different names and so were not removed. There are 3 that do have the same names, however, 2 facilities are part of the ones removed and the remaining were of different types.
+Figure 1 shows method and number of duplicate data points that have been removed as part of the analysis. As discussed, duplicates are considered by name or coordinates. If the coordinates and main attributes match, the duplicate is removed. Therefore, majority of facilities with duplicate coordinates in the MFL were not removed due to possessing different names or were of different types. Any missing coordinates were also omitted before further analysis. The 62 incorrect coordinates in the MFL were kept and not included in this.  
 
 ```{r Duplicates, include=FALSE}
 # MFL
@@ -156,9 +167,9 @@ duplicate_name_WHO = new_malawi_WHO[new_malawi_WHO$`Facility name` %in% new_mala
 duplicate_name_rhs = malawi_rhs[malawi_rhs$name %in% malawi_rhs$name[duplicated(malawi_rhs$name)], ]
 malawi_rhs$name[duplicated(malawi_rhs$name)]
 
-# Misuku (time is different, 5 decimal places), AREA18 (time is same, 5 decimal), Leo pharm (mostly diff, 3 decimal), Care (identical), Likuni (same, 5 decimal), Nakalanzi (different, 2 dec), Kamuzu (2 same user, all diff coord), pharmcare (identical), one stop (diff coord), mwalingo (diff, 3 dec), nsambe (same, 4 dec), good hope (identical), nakalanzi (diff, 2 dec), health (same, 1 dec), chanc (diff, 4 dec), lifuwu (diff, 3 dec), nkombezi (same, 3 dec), Nkhoma Eye Clinic (identical)
+# Misuku (time is different, 4 decimal places), AREA18 (time is same, 5 decimal), Leo pharm (mostly diff, 3 decimal), Care (identical), Likuni (same, 5 decimal), Nakalanzi (different, 2 dec), Kamuzu (2 same user, all diff coord), pharmcare (identical), one stop (diff coord), mwalingo (diff, 3 dec), nsambe (same, 4 dec), good hope (identical), nakalanzi (diff, 2 dec), health (same, 1 dec), chanc (diff, 4 dec), lifuwu (diff, 3 dec), nkombezi (same, 3 dec), Nkhoma Eye Clinic (identical)
 
-# remove: Misuku health centre, AREA18 (same time), Leo pharm(diff time&person), Care Polyclinic Limited, Likuni Drug Store, Nakalanzi Health Centre(diff time), Pharmcare, Mwalingo Private Hospital(diff time), Nsambe Rural Health Center, Good hope pvt clinic, Chancellor College Clinic (diff time&person), Lifuwu Health Center(diff time&person), Nkombezi Clinic(diff time), Nkhoma Eye Clinic 
+# remove: Misuku health centre, AREA18 (same time), Leo pharm(diff time&person), Care Polyclinic Limited, Likuni Drug Store, Nakalanzi Health Centre(diff time), Pharmcare, Mwalingo Private Hospital(diff time), Nsambe Rural Health Center, Good hope pvt clinic, Chancellor College Clinic (diff time&person), Nkombezi Clinic(diff time), Nkhoma Eye Clinic 
 
 # Same coordinates within dataset
 
@@ -173,9 +184,6 @@ sf_malawi_WHO$geometry[duplicated(sf_malawi_WHO$geometry)] # none
 ## healthsites 
 duplicate_coord_rhs = malawi_rhs[malawi_rhs$geometry %in% malawi_rhs$geometry[duplicated(malawi_rhs$geometry)], ]
 malawi_rhs$geometry[duplicated(malawi_rhs$geometry)]
-
-# figure 1 
-
 ```
 
 ```{r Removing duplicates, include=FALSE}
@@ -212,43 +220,85 @@ sf_malawi_WHO = st_as_sf(new_malawi_WHO, coords = c("Long", "Lat"), dim = "XY")
 sf_malawi_WHO = st_set_crs(sf_malawi_WHO, 4326)
 
 # removing duplicates healthsites.io
-which(malawi_rhs$name == "Misuku Health Centre") # 3 85
-which(malawi_rhs$name == "AREA18 mediclinic") # 36 48
-which(malawi_rhs$name == "Leo Pharmacy") # 45 65
-which(malawi_rhs$name == "Care Polyclinic Limited") # 50 60
-which(malawi_rhs$name == "Likuni Drug Store") #  56 109
-which(malawi_rhs$name == "Nakalanzi Health Centre") # 66 148
-which(malawi_rhs$name == "Pharmcare") # 70 95
-which(malawi_rhs$name == "Mwalingo Private Hospital") # 103 186
-which(malawi_rhs$name == "Nsambe Rural Health Center") # 106 210
-which(malawi_rhs$name == "Good hope pvt clinic") # 126 157
-which(malawi_rhs$name == "Chancellor College Clinic") # 165 176
-which(malawi_rhs$name == "Lifuwu Health Center") # 183 212
-which(malawi_rhs$name == "Nkombezi Clinic") # 215 246
-which(malawi_rhs$name == "Nkhoma Eye Clinic") #54 78
+which(malawi_rhs$name == "Misuku Health Centre") # 3 86
+which(malawi_rhs$name == "AREA18 mediclinic") # 35 47
+which(malawi_rhs$name == "Leo Pharmacy") # 44 65
+which(malawi_rhs$name == "Care Polyclinic Limited") # 49 60
+which(malawi_rhs$name == "Likuni Drug Store") #  55 110
+which(malawi_rhs$name == "Nakalanzi Health Centre") # 66 149
+which(malawi_rhs$name == "Pharmcare") # 70 96
+which(malawi_rhs$name == "Mwalingo Private Hospital") # 104 188
+which(malawi_rhs$name == "Nsambe Rural Health Center") # 107 211
+which(malawi_rhs$name == "Good hope pvt clinic") # 127 158
+which(malawi_rhs$name == "Chancellor College Clinic") # 166 177
+which(malawi_rhs$name == "Nkombezi Clinic") # 216 247
+which(malawi_rhs$name == "Nkhoma Eye Clinic") #59 85
 
-malawi_rhs = malawi_rhs[-c(3, 36, 45, 50, 56, 66, 70, 103, 106, 126, 165, 183, 215, 54), ]
+malawi_rhs = malawi_rhs[-c(3, 35, 44, 49, 55, 66, 70, 104, 107, 127, 166, 216, 59), ]
+
+# figure 1 
+## healthsites
+facility.name.rhs = c("Misuku Health Centre", "AREA18 mediclinic", "Leo Pharmacy", "Care Polyclinic Limited", "Likuni Drug Store", "Nakalanzi Health Centre", "Pharmcare", "Mwalingo Private Hospital", "Nsambe Rural Health Center", "Good hope pvt clinic", "Chancellor College Clinic", "Nkombezi Clinic", "Nkhoma Eye Clinic")
+coordinates.rhs = c("33.5208265800223, -9.67965073595659", "33.7706302287404, -13.9445974818355", "33.766769724044, -13.9878648128351", "33.7638450265697, -13.9903576746579", "33.7125379723211, -14.0263392571441", "34.5490414316588, -14.2017512005316", "33.7688361984524, -13.987080182879", "33.5327068381233, -9.6695534762986", "34.6136477193225, -15.2615526872826", "33.7642675583087, -14.0066068321501", "35.3321704544042, -15.3855159746797", "34.8818326595846, -16.2777391528508", "33.7812221367719, -13.9949903525419")
+input.rhs = replicate(13, 2)
+reason.rhs = c("Same type and name. Coordinates identical up to 4 decimal places", "Same type, name and time inputted. Coordinates identical up to 5 decimal places", "Same type and name. Coordinates identical up to 3 decimal places", "Same type, name and time inputted. Coordinates are identical", "Same type, name and time inputted. Coordinates identical up to 5 decimal places", "Same type and name. Coordinates identical up to 2 decimal places", "Same type, name and time inputted. Coordinates are identical", "Same type and name. Coordinates identical up to 3 decimal places", "Same type, name and time inputted. Coordinates identical up to 4 decimal places", "Same type, name and time inputted. Coordinates are identical", "Same type and name. Coordinates identical up to 4 decimal places", "Same type and name. Coordinates identical up to 3 decimal places", "Same type, name and time inputted. Coordinates are identical")
+
+healthsites.rmvd = data.frame(facility.name.rhs, coordinates.rhs, input.rhs, reason.rhs)
+
+## MFL
+facility.name.mfl = c("Ngatala Health Post", "Cape Maclear", "LIFE STYLE PVT CLINIC")
+coordinates.mfl = c("35.07712, -14.65773", "2, -1", "3, -2")
+input.mfl = replicate(3, 2)
+reason.mfl = c("Same attributes. Coordinates identical up to 3 decimal places", "Same attributes except 'Common name'. Coordinates are identical", "Same attributes except 'Common name'. Coordinates are identical")
+
+mfl.rmvd = data.frame(facility.name.mfl, coordinates.mfl, input.mfl, reason.mfl)
+
+## WHO-KWTRP
+facility.name.who = "Mkango Health Centre"
+coordinates.who = "35.27031, -16.73075"
+input.who = 2
+reason.who = "Same attributes. Coordinates are identical up to 4 decimal places"
+
+who.rmvd = data.frame(facility.name.who, coordinates.who, input.who, reason.who)
+
+## formatting
+healthsites.rmvd$Facility.name = healthsites.rmvd$facility.name.rhs
+healthsites.rmvd$Coordinates = healthsites.rmvd$coordinates.rhs
+healthsites.rmvd$No.of.inputs = healthsites.rmvd$input.rhs
+healthsites.rmvd$Reason = healthsites.rmvd$reason.rhs
+
+healthsites.rmvd = healthsites.rmvd[ ,-c(1:4)]
+
+mfl.rmvd$Facility.name = mfl.rmvd$facility.name.mfl
+mfl.rmvd$Coordinates = mfl.rmvd$coordinates.mfl
+mfl.rmvd$No.of.inputs = mfl.rmvd$input.mfl
+mfl.rmvd$Reason = mfl.rmvd$reason.mfl
+
+mfl.rmvd = mfl.rmvd[ , -c(1:4)]
+
+who.rmvd$Facility.name = who.rmvd$facility.name.who
+who.rmvd$Coordinates = who.rmvd$coordinates.who
+who.rmvd$No.of.inputs = who.rmvd$input.who
+who.rmvd$Reason = who.rmvd$reason.who
+
+who.rmvd = who.rmvd[ , -c(1:4)]
+
+### bind
+
+rmvd.facilities = rbind(who.rmvd, mfl.rmvd, healthsites.rmvd)
+
+rmvd.facilities$Source = c("WHO", "MFL", "MFL", "MFL", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io", "healthsites.io")
 ```
 
+```{r figure 1, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Table of duplicate facilities removed from each source. 'No.of.inputs' refers to number of times that facility was duplicated and rationale is reported under 'reason'."}
 
-##### Hypothesis 1  
-
-The MFL contains more than 2 and 5 times as many facilities compared to the WHO-KWTRP and healthsites.io respectively. In total, there are 638 facilities recorded in the WHO-KWTRP data, 1424 in the MFL and 234 in healthsites.io (figure 1). These numbers have been derived after the removal of missing coordinates and duplicates.  
-
-```{r Number of facilities, echo=FALSE, fig.cap="Total number of facilities recorded in each data source." }
-## table
-Sources = c("MFL", "WHO-KWTRP", "healthsites.io")
-Number = c(1424, 638, 234)
-number_3sources = data.frame(Sources, Number)
-
-# plot
-plot_3sources = ggplot(number_3sources, aes(x=Sources, y=Number)) + geom_bar(stat = "identity", width = 0.7, fill="slategray") + labs(x = "Source of data", y = "Frequency") + theme_minimal() + expand_limits(y=c(0,1500)) + coord_flip()
-plot_3sources
-```  
+grid.table(rmvd.facilities)
+```
   
+
 ##### Hypothesis 2  
 
-With the WHO-KWTRP list often used in research, a comparison to the MFL is made here. Setting aside the classifications of unclassified and private in the MFL, both the MFL and WHO-KWTRP have similar numbers of classification types (figure 2). However, there is a difference in the amount of specificity. The WHO-KWTRP provides 5 categories for hospitals while the MFL only provides 3. In contrast, the MFL separates health posts and dispensaries while WHO-KWTRP combines these facilities. The private and unclassified groups not present in WHO-KWTRP only make up 0.4% of the number of facilities in the MFL. Much of the variation between these two sources is accounted for by the number of each type of facilities. Hospitals constitute 8% of the total in the MFL and 13% in WHO-KWTRP. Health centres form most of the facilities in the WHO-KWTRP list, 71%, while the closely related clinics only form 3%. In the MFL, there is more of an even spread of clinics and health centres, which constitute 39% and 35% respectively.  
+With the WHO-KWTRP list often used in research, a comparison to the MFL is made here. Setting aside the groups of unclassified and private in the MFL, both the MFL and WHO-KWTRP have similar numbers of classification types (figure 2). However, there is a difference in the amount of specificity. The WHO-KWTRP provides 5 categories for hospitals while the MFL only provides 3. In contrast, the MFL separates health posts and dispensaries while WHO-KWTRP combines these facilities. The private and unclassified groups not present in WHO-KWTRP only make up 0.4% of the number of facilities in the MFL. Much of the variation between these two sources is accounted for by the number of each type of facilities. Hospitals constitute 8% of the total in the MFL and 13% in WHO-KWTRP. Health centres form most of the facilities in the WHO-KWTRP list, 71%, while the closely related clinics only form 3%. In the MFL, there is more of an even spread of clinics and health centres, which constitute 39% and 35% respectively.  
 
 ```{r Types of facilities, echo=FALSE, fig.cap="Number of each type of facility in the MFL (top) and WHO-KWTRP (bottom), with proportions corresponding to ownership for each type coloured."}
 # MFL
@@ -289,9 +339,9 @@ ggarrange(plot_facility_types_MFL, plot_facility_types_WHO, ncol = 1, nrow = 2, 
 
 ```  
   
-Figure 3 shows the point locations of each facility from both sources and an interactive version can be viewed online. By viewing this map, it appears that the same central hospitals are recorded in both lists and majority of district hospitals, apart from 2, are also matching. Distribution of the 3 other hospital categories in WHO-KWTRP is similar to that of 'hospital' in the MFL (figure 3). However, it also confirms the MFL has a significant number of clinics that are not accounted for in the WHO-KWRTP list, which only reports a small number in the central and southern regions.  
+Figure 3 shows the point locations of facilities from both sources and an interactive version with all facility types can be viewed online. By observing this map, it appears that the same central hospitals are recorded in both lists and majority of district hospitals, apart from 2, are also matching (figure 3). Distribution of the 3 other hospital categories in WHO-KWTRP is predominantly similar to that of 'hospital' in the MFL, with the exception of some central and southern districts. It also confirms the MFL has a significant number of clinics that are not accounted for in the WHO-KWRTP list, which only reports a small number in the central and southern regions (figure 4).  
 
-```{r Maps, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Locations of facilities in the MFL and WHO-KWTRP."}
+```{r Maps, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Locations of central and district hospitals in the MFL and WHO-KWTRP."}
 
 # Point locations - combined 
 tmap_admin2 = tm_shape(st_geometry(malawi_admin2)) + tm_borders()
@@ -307,8 +357,18 @@ health_centre_WHO = filter(sf_malawi_WHO, `Facility type` == "Health Centre")
 clinic_WHO = filter(sf_malawi_WHO, `Facility type` == "Clinic")
 post_disp_WHO = filter(sf_malawi_WHO, `Facility type` == "Health Post/Dispensary")
 
+hosp3_WHO = rbind(mission_hosp_WHO, rural_hosp_WHO, community_hosp_WHO)
+
+hosp3_WHO$`Facility type` = factor(hosp3_WHO$`Facility type`, levels = c("Mission Hospital", "Rural Hospital", "Community Hospital"))
+
+cen_dis_hosp_WHO = rbind(central_hosp_WHO, district_hosp_WHO)
+
+cen_dis_hosp_WHO$`Facility type` = as.factor(cen_dis_hosp_WHO$`Facility type`)
+
+cen_dis_hosp_WHO$`Facility type` = factor(cen_dis_hosp_WHO$`Facility type`, levels = c("Central Hospital", "District Hospital"))
+
 ## map WHO
-tmap_facilities_WHO = tmap_admin2 + tm_shape(central_hosp_WHO) + tm_dots(col = "yellow") + tm_shape(district_hosp_WHO) + tm_dots(col = "olivedrab3") + tm_shape(mission_hosp_WHO) + tm_dots(col = "yellowgreen") + tm_shape(rural_hosp_WHO) + tm_dots(col = "palegreen3") + tm_shape(community_hosp_WHO) + tm_dots(col = "mediumseagreen") + tm_shape(health_centre_WHO) + tm_dots(col = "lightseagreen") + tm_shape(clinic_WHO) + tm_dots(col = "skyblue3") + tm_shape(post_disp_WHO) + tm_dots(col = "slateblue3")+ tm_layout(frame = FALSE, asp = 2, title = "WHO", title.position = c("left", "top"))
+tmap_cen_dis_hosp_WHO = tmap_admin2 + tm_shape(cen_dis_hosp_WHO) + tm_dots(col = "Facility type", size = 0.15, palette = qualitative_hcl(2, palette = "Dark 2")) + tm_layout(asp = 2, title = "WHO-\nKWTRP", title.position = c("left", "top"), title.size = 1, title.fontface = "bold")
 
 ## same with MFL
 central_hosp_MFL = filter(malawi_facilities_MFL, TYPE == "Central Hospital")
@@ -321,16 +381,37 @@ dispensary_MFL = filter(malawi_facilities_MFL, TYPE == "Dispensary")
 priv_MFL = filter(malawi_facilities_MFL, TYPE == "Private")
 un_MFL = filter(malawi_facilities_MFL, TYPE == "Unclassified")
 
-tmap_facilities_MFL = tmap_admin2 + tm_shape(central_hosp_MFL) + tm_dots(col = "yellow") + tm_shape(district_hosp_MFL) + tm_dots(col = "olivedrab3") + tm_shape(hosp_MFL) + tm_dots(col = "mediumseagreen") + tm_shape(health_centre_MFL) + tm_dots(col = "lightseagreen") + tm_shape(clinic_MFL) + tm_dots(col = "skyblue3") + tm_shape(post_MFL) + tm_dots(col = "slateblue1") + tm_shape(dispensary_MFL) + tm_dots(col = "orchid3") + tm_shape(priv_MFL) + tm_dots(col = "slategray") + tm_shape(un_MFL) + tm_dots(col = "slategray") + tm_layout(frame = FALSE, asp = 2, title = "MFL", title.position = c("left", "top"))
+cen_dis_hosp_MFL = rbind(central_hosp_MFL, district_hosp_MFL)
 
-facilities = tmap_arrange(tmap_facilities_MFL, tmap_facilities_WHO, ncol = 2)
-facilities
+cen_dis_hosp_MFL$TYPE = as.factor(cen_dis_hosp_MFL$TYPE)
+
+cen_dis_hosp_MFL$TYPE = factor(cen_dis_hosp_MFL$TYPE, levels = c("Central Hospital", "District Hospital"))
+
+tmap_cen_dis_hosp_MFL = tmap_admin2 + tm_shape(cen_dis_hosp_MFL) + tm_dots(col = "TYPE", palette = qualitative_hcl(2, palette = "Dark 2"), size = 0.15, title = "Facility type") + tm_layout(asp = 2, title = "MFL", title.position = c("left", "top"), title.size = 1, title.fontface = "bold")
+
+# tm_add_legend(type = "symbol", col = "mediumseagreen", labels = "Hospital", title = "Facility type", shape = 20)
+
+tmap_cen_dis = tmap_arrange(tmap_facilities_MFL, tmap_facilities_WHO, ncol = 2)
+tmap_cen_dis
 ```  
 
+```{r Clinics, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Locations of clinics in the MFL and WHO-KWTRP."}
+tmap_clinics_MFL = tmap_admin2 + tm_shape(clinic_MFL) + tm_dots(col = "deepskyblue4", size = 0.15, title = "Facility type") + tm_layout(asp = 2, title = "MFL", title.position = c("left", "top"), title.size = 1, title.fontface = "bold") + tm_add_legend(type = "symbol", col = "deepskyblue4", labels = "Clinic", title = "Facility type", shape = 20)
 
-  Comparison between private faciltiies is also made here, as the WHO-KWTRP data does not include this. In the MFL, 30% of all facilities are privately owned and majority of these consist of 356 clinics, 45 dispensaries and 16 hospitals. Distribution across the country indicates many are present in Blantyre and Lilongwe, with 95 and 67 respectively (figure 4).  
+tmap_clinics_WHO = tmap_admin2 + tm_shape(clinic_WHO) + tm_dots(col = "deepskyblue4", size = 0.15, title = "Facility type") + tm_layout(asp = 2, title = "WHO-\nKWTRP", title.position = c("left", "top"), title.size = 1, title.fontface = "bold") + tm_add_legend(type = "symbol", col = "deepskyblue4", labels = "Clinic", title = "Facility type", shape = 20)
+
+tmap_clinics = tmap_arrange(tmap_clinics_MFL, tmap_clinics_WHO, ncol = 2, nrow = 1)
+tmap_clinics
+```
+
+```{r Interactive map, echo=FALSE, message=FALSE, warning=FALSE, fig.show='hide'}
+tmap_facilities_WHO = tmap_admin2 + tm_shape(central_hosp_WHO) + tm_dots(col = "Facility type", size = 0.15, palette = qualitative_hcl(2, palette = "Dark 2")) + tm_layout(asp = 2, title = "WHO-\nKWTRP", title.position = c("left", "top"), title.size = 1, title.fontface = "bold")
+
+```
   
-```{r Private MFL, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Number of private facilities per district obtained from the MFL."}
+Comparison between private faciltiies is also made here, as the WHO-KWTRP data does not include this. In the MFL, 30% of all facilities are privately owned. Majority consist of 356 clinics, 45 dispensaries and 16 hospitals. Distribution across the country indicates many are present in Blantyre and Lilongwe, with 95 and 67 private facilities respectively (figure 5).  
+  
+```{r Private MFL, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Number of private facilities per district in the MFL."}
 private_MFL = filter(malawi_facilities_MFL, OWNERSHIP == "Private")
 # 433 private facilities, 30.3%
 
@@ -338,7 +419,7 @@ private_MFL = filter(malawi_facilities_MFL, OWNERSHIP == "Private")
 
 malawi_admin2$private_MFL = lengths(st_intersects(malawi_admin2, private_MFL, sparse = TRUE))
 
-tmap_private_district_MFL = tm_shape(malawi_admin2) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("private_MFL",  palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "Private facilities")
+tmap_private_district_MFL = tm_shape(malawi_admin2) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("private_MFL",  palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "Private facilities") + tm_layout(asp = 0.5, legend.title.size = 1)
 tmap_private_district_MFL
 
 # which types are private?
@@ -349,16 +430,16 @@ types_private_MFL = as.data.frame(table(private_MFL$TYPE))
 
 ##### Hypothesis 3  
 
-Within healthsites.io, 157 hospitals are recorded which is greater than both the MFL and WHO-KWTRP, with 117 and 82 hospitals respectively (figure 4). Healthsites.io does not provide a breakdown of hospitals into groups. A look into the distribution by district shows majority of the difference in hospital number is concentrated around 3 districts in the south (figure 5). Blantyre district has 39 hospitals in healthsites.io compared to 14 in the MFL and both its neighbouring Mwanza and Thyolo districts have 9 and 7 additional hospitals in healthsites.io respectively. Instances where the MFL has more hospitals in a district, the number does not exceed more than 4 facilities. A note here is that 4 hospitals in the MFL did not have accurate coordinates and so were dropped from the total of 117 in this analysis. 
+Within healthsites.io, 158 hospitals are recorded which is greater than both the MFL and WHO-KWTRP, with 117 and 82 hospitals respectively (figure 6). Healthsites.io does not provide a breakdown of hospitals into groups. A look into the distribution by district shows majority of the difference in hospital number is concentrated around 3 districts in the south (figure 7). Blantyre district has 39 hospitals in healthsites.io compared to 14 in the MFL and both its neighbouring Mwanza and Thyolo districts have 9 and 7 additional hospitals in healthsites.io respectively. Instances where the MFL has more hospitals in a district, the number does not exceed more than 4 facilities. A note here is that 4 hospitals in the MFL did not have accurate coordinates and so were dropped from the total of 117 in this analysis. 
   
 ```{r Hospital comparison, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Number of hospitals in each data source."}
 # barplot
-Hospitals = c(117, 82, 157)
+Hospitals = c(117, 82, 158)
 Source2 = c("MFL", "WHO-KWTRP", "healthsites.io")
 
 hosp_3sources = data.frame(Hospitals, Source2)
 
-plot_hosp_3sources = ggplot(hosp_3sources, aes(x=Source2, y=Hospitals)) + geom_bar(stat = "identity", width = 0.7, fill="slategray") + labs(x = "Source of data", y = "Frequency") + theme_minimal() + expand_limits(y=c(0,200)) + coord_flip()
+plot_hosp_3sources = ggplot(hosp_3sources, aes(x=Source2, y=Hospitals)) + geom_bar(stat = "identity", width = 0.6, fill="slategray") + labs(x = "Source of data", y = "Frequency") + theme_minimal() + expand_limits(y=c(0,200)) + coord_flip()
 plot_hosp_3sources
 
 ```  
@@ -381,9 +462,9 @@ malawi_admin2$all_hosp_MFL = lengths(st_intersects(malawi_admin2, all_hosp_MFL, 
 
 # plot
 
-tmap_hosp_MFL = tm_shape(malawi_admin2) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("all_hosp_MFL",  palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "Hospitals", breaks = c(0, 5, 10, 15, 20)) + tm_layout(title = "MFL")
+tmap_hosp_MFL = tm_shape(malawi_admin2) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("all_hosp_MFL",  palette = sequential_hcl(6, palette = "YlGn", rev = TRUE), title = "Hospitals") + tm_layout(title = "MFL", title.size = 1, title.fontface = "bold")
 
-tmap_hosp_rhs = tm_shape(malawi_admin2) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("hosp_rhs",  palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "Hospitals", breaks = c(0, 5, 10, 15, 20, 25, 30, 35, 40)) + tm_layout(title = "healthsites.io")
+tmap_hosp_rhs = tm_shape(malawi_admin2) + tm_borders() + tm_shape(malawi_admin2) + tm_fill("hosp_rhs",  palette = sequential_hcl(6, palette = "YlGnBu", rev = TRUE), title = "Hospitals") + tm_layout(title = "healthsites.\nio", title.size = 1, title.fontface = "bold")
 
 hosp_MFL_rhs = tmap_arrange(tmap_hosp_MFL, tmap_hosp_rhs, ncol = 2)
 hosp_MFL_rhs
@@ -408,17 +489,18 @@ blantyre_intersect_admin2_MFL = filter(intersect_admin2_MFL, shapeName == "Blant
 blantyre_admin2 = filter(malawi_admin2, shapeName == "Blantyre")
 blantyre_admin3 = st_intersection(malawi_admin3, blantyre_admin2)
 
+blantyre_city_admin3 = filter(blantyre_admin3, shapeName == "Michiru Ward" | shapeName == "South Lunzu Ward" | shapeName == "Mapanga Ward" | shapeName == "Nkolokoti Ward" | shapeName == "Ndirande Norh Ward" | shapeName == "Ndirande South Ward" | shapeName == "Ndirande West Ward" | shapeName == "Likhubula Ward" | shapeName == "Chilomoni Ward" | shapeName == "Blantyre West Ward" | shapeName == "Chichiri Ward" | shapeName == "Blantyre Central Ward" | shapeName == "Blantyre East Ward" | shapeName == "Mzedi Ward" | shapeName == "Bangwe Ward" | shapeName == "Namiyango Ward" | shapeName == "Limbe East Ward" | shapeName == "Limbe Central Ward" | shapeName == "Limbe west Ward" | shapeName == "Soche East Ward" | shapeName == "Soche West Ward" | shapeName == "Nancholi Ward" | shapeName == "Misesa" | shapeName == "Chigumula Ward" | shapeName == "Msamba Ward")
+
 ## 
 intersect_admin2_WHO = st_intersection(sf_malawi_WHO, malawi_admin2)
 blantyre_intersect_admin2_WHO = filter(intersect_admin2_WHO, shapeName == "Blantyre")
 
 # maps of blantyre 
-tmap_blantyre_MFL =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_intersect_admin2_MFL) + tm_dots(col = "TYPE", size = 0.3) + tm_layout(title = "MFL")
-
+tmap_blantyre_MFL =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(blantyre_city_admin3) +tm_borders(lwd = 3) + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_intersect_admin2_MFL) + tm_dots(col = "TYPE", size = 0.2) + tm_layout(title = "MFL", title.size = 1, title.fontface = "bold")
 
  # 154 facilities in total
 
-tmap_blantyre_WHO =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_intersect_admin2_WHO) + tm_dots(col = "Facility.type", size = 0.3) + tm_layout(title = "WHO")
+tmap_blantyre_WHO =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(blantyre_city_admin3) +tm_borders(lwd = 3) + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_intersect_admin2_WHO) + tm_dots(col = "Facility.type", size = 0.2) + tm_layout(title = "WHO-\nKWTRP", title.size = 1, title.fontface = "bold")
 
  # 31 facilities in total
 
@@ -430,7 +512,11 @@ tmap_arrange(tmap_blantyre_MFL, tmap_blantyre_WHO)
 private_intersect_admin2_MFL = filter(intersect_admin2_MFL, OWNERSHIP == "Private")
 blantyre_private_intersect_admin2_MFL = filter(private_intersect_admin2_MFL, shapeName == "Blantyre")
 
-tmap_private_blantyre = tm_shape(blantyre_admin3) + tm_borders() + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_private_intersect_admin2_MFL) + tm_dots(col = "TYPE", size = 0.3) + tm_layout(title = "Private facilities", legend.outside = TRUE)
+blantyre_private_intersect_admin2_MFL$TYPE = as.factor(blantyre_private_intersect_admin2_MFL$TYPE)
+
+blantyre_private_intersect_admin2_MFL$TYPE = factor(blantyre_private_intersect_admin2_MFL$TYPE, levels = c("Hospital", "Health Centre", "Clinic"))
+
+tmap_private_blantyre = tm_shape(blantyre_admin3) + tm_borders() + tm_shape(blantyre_city_admin3) +tm_borders(lwd = 3) + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_private_intersect_admin2_MFL) + tm_dots(col = "TYPE", palette = qualitative_hcl(3, palette = "Dark 2"), size = 0.2, title = "Facility type") + tm_layout(title = "Private facilities", legend.outside = TRUE, title.size = 1, title.fontface = "bold")
 tmap_private_blantyre
 
  # 9 hospitals, 3 health centres, 83 clinics
@@ -452,14 +538,15 @@ intersect_admin2_rhs = st_intersection(malawi_rhs, malawi_admin2)
 hosp_intersect_admin2_rhs = filter(intersect_admin2_rhs, amenity == "hospital")
 blantyre_hosp_intersect_admin2_rhs = filter(hosp_intersect_admin2_rhs, shapeName == "Blantyre")
 
-tmap_hosp_blantyre =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_hosp_intersect_admin2_MFL) + tm_dots(col = "hospital", palette="red", title = "MFL hospitals", size = 0.3) + tm_shape(blantyre_hosp_intersect_admin2_rhs) + tm_dots(col = "amenity",title = "healthsites.io amenity tag", palette="darkgreen", size = 0.3) + tm_layout(title = "A")
+tmap_hosp_blantyre =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(blantyre_city_admin3) +tm_borders(lwd = 3) + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_hosp_intersect_admin2_MFL) + tm_dots(col = "hospital", palette="red", title = "MFL", size = 0.2) + tm_shape(blantyre_hosp_intersect_admin2_rhs) + tm_dots(col = "amenity",title = "Amenity tag", palette="darkgreen", size = 0.2) + tm_layout(title = "A", title.size = 1, title.fontface = "bold", legend.title.size = 1, legend.position = c("left", "bottom"))
+
 # 14 mfl hospitals and 39 in healthsites 
 
 ## filter hospitals using healthcare tag
 health_intersect_admin2_rhs = filter(intersect_admin2_rhs, healthcare == "hospital") # 74 in total
 blantyre_health_intersect_admin2_rhs = filter(health_intersect_admin2_rhs, shapeName == "Blantyre")
 
-tmap_hosp_health_blantyre =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_hosp_intersect_admin2_MFL) + tm_dots(col = "hospital", palette="red", title = "MFL hospitals", size = 0.3) + tm_shape(blantyre_health_intersect_admin2_rhs) + tm_dots(col = "healthcare",palette="darkgreen", title = "healthsites.io healthcare tag", size = 0.3) + tm_layout(title = "B")
+tmap_hosp_health_blantyre =  tm_shape(blantyre_admin3) + tm_borders() + tm_shape(blantyre_city_admin3) +tm_borders(lwd = 3) + tm_shape(filter(malawi_admin2, shapeName == "Blantyre")) + tm_borders() + tm_shape(blantyre_hosp_intersect_admin2_MFL) + tm_dots(col = "hospital", palette="red", title = "MFL", size = 0.2) + tm_shape(blantyre_health_intersect_admin2_rhs) + tm_dots(col = "healthcare",palette="darkgreen", title = "Healthcare tag", size = 0.2) + tm_layout(title = "B", title.size = 1, title.fontface = "bold", legend.title.size = 1, legend.position = c("left", "bottom"))
 # 21 in healthsites 
 
 # table for Blantyre in healthsites.io
