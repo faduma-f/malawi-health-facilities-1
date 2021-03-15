@@ -391,7 +391,7 @@ tmap_cen_dis_hosp_MFL = tmap_admin2 + tm_shape(cen_dis_hosp_MFL) + tm_dots(col =
 
 # tm_add_legend(type = "symbol", col = "mediumseagreen", labels = "Hospital", title = "Facility type", shape = 20)
 
-tmap_cen_dis = tmap_arrange(tmap_facilities_MFL, tmap_facilities_WHO, ncol = 2)
+tmap_cen_dis = tmap_arrange(tmap_cen_dis_hosp_MFL, tmap_cen_dis_hosp_WHO, ncol = 2)
 tmap_cen_dis
 ```  
 
@@ -448,9 +448,9 @@ plot_hosp_3sources
 # plot of hospitals in healthsites.io
 hosp_rhs = filter(malawi_rhs, amenity == "hospital")
 
-tmap_facilities_rhs = tmap_admin2 + tm_shape(hosp_rhs) + tm_dots(col = "mediumseagreen") + tm_layout(frame = FALSE, asp = 2, title = "healthsites.io", title.position = c("left", "top"))
+# tmap_facilities_rhs = tmap_admin2 + tm_shape(hosp_rhs) + tm_dots(col = "mediumseagreen") + tm_layout(frame = FALSE, asp = 2, title = "healthsites.io", title.position = c("left", "top"))
 
-facilities_rhs = tmap_arrange(tmap_facilities_MFL, tmap_facilities_rhs, ncol = 2)
+# facilities_rhs = tmap_arrange(tmap_facilities_MFL, tmap_facilities_rhs, ncol = 2)
 
 # districts
 all_hosp_MFL = filter(malawi_facilities_MFL, TYPE == "Central Hospital" | TYPE == "District Hospital" | TYPE == "Hospital")
