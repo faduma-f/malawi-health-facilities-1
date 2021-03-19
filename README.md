@@ -5,4 +5,5 @@ My aim is to investigate differences between these sources, produce a summary th
 
 For easy viewing:  
 https://faduma-f.github.io/malawi-health-facilities-1/01-Exploration.html  
-https://faduma-f.github.io/malawi-health-facilities-1/02-Selection.html
+
+Final version is available as a PDF file. 
